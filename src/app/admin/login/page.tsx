@@ -78,7 +78,7 @@ export default function AdminLoginPage() {
                 <input
                   type="email"
                   required
-                  placeholder="admin@vidabricks.com"
+                  placeholder="Enter email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-transparent text-white text-xs outline-none placeholder:text-slate-500"

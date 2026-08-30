@@ -628,7 +628,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
                 <input
                   type="email"
                   required
-                  placeholder="name@vidabricks.com"
+                  placeholder="Enter email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-vb-dark border border-vb-border text-white text-sm focus:border-vb-gold outline-none"
