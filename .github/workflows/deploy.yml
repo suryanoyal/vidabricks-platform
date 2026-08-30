@@ -37,6 +37,9 @@ jobs:
 
       - name: Build Next.js Static Export
         run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://mzrpuvbvfbhtxurhxjbh.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_kMZr-auUJGOHRhnnegr_sg_rR6pjr4b' }}
 
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
