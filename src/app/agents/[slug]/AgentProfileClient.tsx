@@ -241,6 +241,24 @@ export const AgentProfileClient: React.FC<AgentProfileClientProps> = ({
                 Dubai, UAE
               </span>
             </div>
+
+            {/* Languages Badges in Hero Header */}
+            {agent.languages && agent.languages.length > 0 && (
+              <div className="flex flex-wrap items-center justify-center gap-1.5 pt-2">
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+                  <Globe className="w-3 h-3 text-vb-gold-light" />
+                  <span>Speaks:</span>
+                </div>
+                {agent.languages.map((lang) => (
+                  <span
+                    key={lang}
+                    className="px-2.5 py-0.5 rounded-full bg-vb-navy border border-vb-gold/40 text-vb-gold-champagne text-[11px] font-bold shadow-sm"
+                  >
+                    {lang}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Experience & Nationality Badges (if available) */}
@@ -279,70 +297,76 @@ export const AgentProfileClient: React.FC<AgentProfileClientProps> = ({
         </div>
 
         {/* PROFESSIONAL CREDENTIALS & SPECIALISATIONS */}
-        <div className="rounded-3xl bg-vb-glass-card border border-vb-border/90 p-6 shadow-luxury-card space-y-5">
-          {/* Specialisations Tags */}
-          {agent.specialisations && agent.specialisations.length > 0 && (
-            <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-vb-gold-champagne mb-2.5">
-                <Award className="w-3.5 h-3.5 text-vb-gold-light" />
-                <span>Specialisations</span>
+        {((agent.specialisations && agent.specialisations.length > 0) ||
+          (agent.areas && agent.areas.length > 0) ||
+          (agent.languages && agent.languages.length > 0) ||
+          (agent.social && Object.values(agent.social).some(Boolean))) && (
+          <div className="rounded-3xl bg-vb-glass-card border border-vb-border/90 p-6 shadow-luxury-card space-y-5">
+            {/* Specialisations Tags */}
+            {agent.specialisations && agent.specialisations.length > 0 && (
+              <div>
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-vb-gold-champagne mb-2.5">
+                  <Award className="w-3.5 h-3.5 text-vb-gold-light" />
+                  <span>Specialisations</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {agent.specialisations.map((spec) => (
+                    <span
+                      key={spec}
+                      className="px-3 py-1 rounded-lg bg-vb-navy border border-vb-gold/30 text-vb-gold-champagne text-xs font-medium tracking-wide shadow-sm"
+                    >
+                      {spec}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {agent.specialisations.map((spec) => (
-                  <span
-                    key={spec}
-                    className="px-3 py-1 rounded-lg bg-vb-navy border border-vb-gold/30 text-vb-gold-champagne text-xs font-medium tracking-wide shadow-sm"
-                  >
-                    {spec}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Prime Areas */}
-          {agent.areas && agent.areas.length > 0 && (
-            <div className="pt-4 border-t border-vb-border/60">
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-vb-gold-champagne mb-2.5">
-                <MapPin className="w-3.5 h-3.5 text-vb-gold-light" />
-                <span>Prime Areas of Expertise</span>
+            {/* Prime Areas */}
+            {agent.areas && agent.areas.length > 0 && (
+              <div className={agent.specialisations?.length ? "pt-4 border-t border-vb-border/60" : ""}>
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-vb-gold-champagne mb-2.5">
+                  <MapPin className="w-3.5 h-3.5 text-vb-gold-light" />
+                  <span>Prime Areas of Expertise</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {agent.areas.map((area) => (
+                    <span
+                      key={area}
+                      className="px-3 py-1 rounded-lg bg-vb-dark/80 border border-vb-border text-slate-200 text-xs font-medium"
+                    >
+                      {area}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {agent.areas.map((area) => (
-                  <span
-                    key={area}
-                    className="px-3 py-1 rounded-lg bg-vb-dark/80 border border-vb-border text-slate-200 text-xs font-medium"
-                  >
-                    {area}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Languages Spoken */}
-          {agent.languages && agent.languages.length > 0 && (
-            <div className="pt-4 border-t border-vb-border/60">
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-vb-gold-champagne mb-2.5">
-                <Globe className="w-3.5 h-3.5 text-vb-gold-light" />
-                <span>Languages Spoken</span>
+            {/* Languages Spoken */}
+            {agent.languages && agent.languages.length > 0 && (
+              <div className={(agent.specialisations?.length || agent.areas?.length) ? "pt-4 border-t border-vb-border/60" : ""}>
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-vb-gold-champagne mb-2.5">
+                  <Globe className="w-3.5 h-3.5 text-vb-gold-light" />
+                  <span>Languages Spoken</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {agent.languages.map((lang) => (
+                    <span
+                      key={lang}
+                      className="px-3 py-1.5 rounded-xl bg-vb-navy border border-vb-gold/40 text-vb-gold-champagne text-xs font-bold shadow-sm flex items-center gap-1.5"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-vb-gold" />
+                      <span>{lang}</span>
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {agent.languages.map((lang) => (
-                  <span
-                    key={lang}
-                    className="px-2.5 py-1 rounded-md bg-vb-navy border border-vb-border text-slate-300 text-xs font-medium"
-                  >
-                    {lang}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Social Links */}
-          <SocialLinksGrid social={agent.social} agent={agent} />
-        </div>
+            {/* Social Links */}
+            <SocialLinksGrid social={agent.social} agent={agent} />
+          </div>
+        )}
 
         {/* FEATURED PROPERTIES CURATED BY AGENT */}
         {agent.focusProperties && agent.focusProperties.length > 0 && (
