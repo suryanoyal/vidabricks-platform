@@ -215,7 +215,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.firstName || !formData.lastName || !formData.phone || !formData.email) {
       alert('Please fill in all required fields (Name, Phone, Email).');
@@ -228,37 +228,43 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
 
     setIsSaving(true);
 
-    const saved = platformStore.saveAgent({
-      id: initialData?.id,
-      firstName: formData.firstName!,
-      lastName: formData.lastName!,
-      slug: formData.slug || slugify(`${formData.firstName} ${formData.lastName}`),
-      photo: formData.photo || LUXURY_AVATAR_PRESETS[0],
-      jobTitle: formData.jobTitle || 'Property Consultant',
-      reraNumber: formData.reraNumber || '',
-      phone: formData.phone!,
-      whatsapp: formData.whatsapp || formData.phone!,
-      email: formData.email!,
-      bio: formData.bio || '',
-      languages: formData.languages || ['English'],
-      nationality: formData.nationality,
-      experienceYears: Number(formData.experienceYears) || 0,
-      location: formData.location || 'Dubai, UAE',
-      specialisations: formData.specialisations || [],
-      areas: formData.areas || [],
-      social: formData.social || {},
-      customWhatsappMessage: formData.customWhatsappMessage,
-      status: formData.status || 'active',
-      isFeatured: Boolean(formData.isFeatured),
-      focusProperties: initialData?.focusProperties || [],
-    });
+    try {
+      const saved = await platformStore.saveAgentAsync({
+        id: initialData?.id,
+        firstName: formData.firstName!,
+        lastName: formData.lastName!,
+        slug: (formData.slug || slugify(`${formData.firstName} ${formData.lastName}`)).toLowerCase(),
+        photo: formData.photo || LUXURY_AVATAR_PRESETS[0],
+        jobTitle: formData.jobTitle || 'Property Consultant',
+        reraNumber: formData.reraNumber || '',
+        phone: formData.phone!,
+        whatsapp: formData.whatsapp || formData.phone!,
+        email: formData.email!,
+        bio: formData.bio || '',
+        languages: formData.languages || ['English'],
+        nationality: formData.nationality,
+        experienceYears: Number(formData.experienceYears) || 0,
+        location: formData.location || 'Dubai, UAE',
+        specialisations: formData.specialisations || [],
+        areas: formData.areas || [],
+        social: formData.social || {},
+        customWhatsappMessage: formData.customWhatsappMessage,
+        status: formData.status || 'active',
+        isFeatured: Boolean(formData.isFeatured),
+        focusProperties: initialData?.focusProperties || [],
+      });
 
-    setIsSaving(false);
-    // Redirect to QR Studio for newly created agent or back to agents directory
-    if (!isEditing) {
-      router.push(`/admin/agents/${saved.id}/qr`);
-    } else {
-      router.push('/admin/agents');
+      setIsSaving(false);
+      // Redirect to QR Studio for newly created agent or back to agents directory
+      if (!isEditing) {
+        window.location.href = `/admin/agents/${saved.id}/qr/`;
+      } else {
+        window.location.href = '/admin/agents/';
+      }
+    } catch (err) {
+      console.error('Error saving agent:', err);
+      setIsSaving(false);
+      alert('Failed to save agent changes. Please check your internet connection.');
     }
   };
 

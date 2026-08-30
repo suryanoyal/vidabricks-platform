@@ -231,6 +231,14 @@ export const platformStore = {
     return targetAgent;
   },
 
+  async saveAgentAsync(agentData: Omit<Agent, 'id' | 'createdAt' | 'updatedAt' | 'profileViews' | 'whatsappClicks' | 'callClicks' | 'emailClicks' | 'vcardDownloads' | 'shares' | 'inquiriesCount'> & { id?: string }): Promise<Agent> {
+    const saved = this.saveAgent(agentData);
+    if (isSupabaseConfigured) {
+      await supabaseApi.saveAgent(saved);
+    }
+    return saved;
+  },
+
   deleteAgent(id: string): boolean {
     const agents = this.getAgents();
     const filtered = agents.filter((a) => a.id !== id);
@@ -245,6 +253,14 @@ export const platformStore = {
       return true;
     }
     return false;
+  },
+
+  async deleteAgentAsync(id: string): Promise<boolean> {
+    const deleted = this.deleteAgent(id);
+    if (deleted && isSupabaseConfigured) {
+      await supabaseApi.deleteAgent(id);
+    }
+    return deleted;
   },
 
   toggleAgentStatus(id: string): Agent | undefined {

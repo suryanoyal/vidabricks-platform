@@ -10,7 +10,7 @@ export default function NewAgentPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-3">
         <Link
-          href="/admin/agents"
+          href="/admin/agents/"
           className="p-2 rounded-xl bg-vb-card hover:bg-vb-card-hover border border-vb-border text-slate-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

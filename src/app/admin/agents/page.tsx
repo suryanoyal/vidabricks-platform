@@ -79,14 +79,14 @@ export default function AdminAgentsPage() {
       return 0;
     });
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (deleteTarget) {
-      platformStore.deleteAgent(deleteTarget.id);
+      await platformStore.deleteAgentAsync(deleteTarget.id);
       setDeleteTarget(null);
     }
   };
 
-  const handleToggleConfirm = () => {
+  const handleToggleConfirm = async () => {
     if (toggleTarget) {
       platformStore.toggleAgentStatus(toggleTarget.id);
       setToggleTarget(null);
@@ -107,7 +107,7 @@ export default function AdminAgentsPage() {
         </div>
 
         <Link
-          href="/admin/agents/new"
+          href="/admin/agents/new/"
           className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-vb-gold to-vb-gold-light hover:brightness-110 text-vb-black text-xs font-bold transition-all shadow-gold-subtle shrink-0"
         >
           <Plus className="w-4 h-4" />
@@ -310,7 +310,7 @@ export default function AdminAgentsPage() {
                       {/* QR Quick Action */}
                       <td className="py-3.5 px-4">
                         <Link
-                          href={`/admin/agents/${agent.id}/qr`}
+                          href={`/admin/agents/${agent.id}/qr/`}
                           className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-vb-navy hover:bg-vb-border border border-vb-border text-vb-gold-light hover:text-white text-[11px] font-semibold transition-colors"
                         >
                           <QrCode className="w-3.5 h-3.5" />
@@ -322,7 +322,7 @@ export default function AdminAgentsPage() {
                       <td className="py-3.5 px-4 sm:px-6 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <Link
-                            href={`/agents/${agent.slug}`}
+                            href={`/agents/${agent.slug}/`}
                             target="_blank"
                             className="p-1.5 rounded-lg bg-vb-navy hover:bg-vb-border text-slate-300 hover:text-white transition-colors"
                             title="View Public Profile"
@@ -331,7 +331,7 @@ export default function AdminAgentsPage() {
                           </Link>
 
                           <Link
-                            href={`/admin/agents/${agent.id}/edit`}
+                            href={`/admin/agents/${agent.id}/edit/`}
                             className="p-1.5 rounded-lg bg-vb-navy hover:bg-vb-border text-slate-300 hover:text-white transition-colors"
                             title="Edit Agent"
                           >
