@@ -32,7 +32,6 @@ export interface DbAgent {
   email: string;
   bio: string;
   photo: string;
-  nationality?: string | null;
   experience_years: number;
   location: string;
   specialisations: string[];
@@ -40,8 +39,6 @@ export interface DbAgent {
   languages: string[];
   social: Record<string, string>;
   focus_properties: any[];
-  custom_whatsapp_message?: string | null;
-  is_featured?: boolean;
   status: 'active' | 'inactive';
   created_at: string;
   updated_at: string;
@@ -60,7 +57,6 @@ export function mapDbAgentToAgent(db: DbAgent): Agent {
     email: db.email,
     bio: db.bio,
     photo: db.photo,
-    nationality: db.nationality || undefined,
     experienceYears: db.experience_years || 0,
     location: db.location || 'Dubai, UAE',
     specialisations: db.specialisations || [],
@@ -68,8 +64,6 @@ export function mapDbAgentToAgent(db: DbAgent): Agent {
     languages: db.languages || ['English'],
     social: db.social || {},
     focusProperties: db.focus_properties || [],
-    customWhatsappMessage: db.custom_whatsapp_message || undefined,
-    isFeatured: db.is_featured || false,
     status: db.status || 'active',
     profileViews: 0,
     whatsappClicks: 0,
@@ -96,16 +90,13 @@ export function mapAgentToDbAgent(agent: Agent): Partial<DbAgent> {
     email: agent.email,
     bio: agent.bio,
     photo: agent.photo,
-    nationality: agent.nationality || null,
     experience_years: agent.experienceYears || 0,
     location: agent.location || 'Dubai, UAE',
     specialisations: agent.specialisations || [],
     areas: agent.areas || [],
     languages: agent.languages || ['English'],
-    social: agent.social as any || {},
+    social: (agent.social as any) || {},
     focus_properties: agent.focusProperties || [],
-    custom_whatsapp_message: agent.customWhatsappMessage || null,
-    is_featured: agent.isFeatured || false,
     status: agent.status || 'active',
     updated_at: new Date().toISOString(),
   };
