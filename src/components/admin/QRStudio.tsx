@@ -58,10 +58,24 @@ export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
     generateAgentQRCodeDataUrl(profileUrl, {
       width: 1024,
       ...styleOptions,
-    }).then((url) => {
-      setQrDataUrl(url);
-      setLoading(false);
-    });
+    })
+      .then((url) => {
+        setQrDataUrl(url);
+        setLoading(false);
+      })
+      .catch(async (err) => {
+        console.warn('Custom logo QR failed, generating fallback QR:', err);
+        try {
+          const QRCode = (await import('qrcode')).default;
+          const fallbackUrl = await QRCode.toDataURL(profileUrl, {
+            width: 1024,
+            margin: 2,
+            color: styleOptions.color,
+          });
+          setQrDataUrl(fallbackUrl);
+        } catch (e) {}
+        setLoading(false);
+      });
   }, [profileUrl, qrStyle]);
 
   const handleCopyUrl = async () => {

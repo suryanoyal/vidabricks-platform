@@ -4,35 +4,73 @@ import React, { useEffect, useState } from 'react';
 import { Globe, ArrowRight } from 'lucide-react';
 import { AgentHeader } from '@/components/public/AgentHeader';
 import { AgentProfileClient } from './agents/[slug]/AgentProfileClient';
+import { EditAgentClient } from './admin/agents/[id]/edit/EditAgentClient';
+import { AgentQRClient } from './admin/agents/[id]/qr/AgentQRClient';
 
 export default function NotFound() {
-  const [dynamicAgentSlug, setDynamicAgentSlug] = useState<string | null>(null);
+  const [dynamicRoute, setDynamicRoute] = useState<{
+    type: 'agent' | 'admin-edit' | 'admin-qr' | '404';
+    param: string;
+  } | null>(null);
   const [isChecking, setIsChecking] = useState<boolean>(true);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
       
-      // Match /agents/[slug] or /agents/[slug]/
+      // 1. Match /admin/agents/[id]/edit or /admin/agents/[id]/edit/
+      const editMatch = path.match(/\/admin\/agents\/([^/]+)\/edit/);
+      if (editMatch && editMatch[1]) {
+        setDynamicRoute({ type: 'admin-edit', param: editMatch[1] });
+        setIsChecking(false);
+        return;
+      }
+
+      // 2. Match /admin/agents/[id]/qr or /admin/agents/[id]/qr/
+      const qrMatch = path.match(/\/admin\/agents\/([^/]+)\/qr/);
+      if (qrMatch && qrMatch[1]) {
+        setDynamicRoute({ type: 'admin-qr', param: qrMatch[1] });
+        setIsChecking(false);
+        return;
+      }
+
+      // 3. Match /agents/[slug] or /agents/[slug]/
       const agentMatch = path.match(/\/agents\/([^/]+)/);
       if (agentMatch && agentMatch[1]) {
-        setDynamicAgentSlug(agentMatch[1]);
+        setDynamicRoute({ type: 'agent', param: agentMatch[1] });
         setIsChecking(false);
         return;
       }
     }
+    setDynamicRoute({ type: '404', param: '' });
     setIsChecking(false);
   }, []);
-
-  // If URL is an agent card, dynamically render the client profile component
-  if (dynamicAgentSlug) {
-    return <AgentProfileClient slug={dynamicAgentSlug} />;
-  }
 
   if (isChecking) {
     return (
       <div className="min-h-screen bg-vb-dark flex items-center justify-center text-white">
         <div className="w-8 h-8 rounded-full border-2 border-vb-gold border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // Dynamically render the matched client route
+  if (dynamicRoute?.type === 'agent') {
+    return <AgentProfileClient slug={dynamicRoute.param} />;
+  }
+
+  if (dynamicRoute?.type === 'admin-edit') {
+    return (
+      <div className="min-h-screen bg-vb-dark text-white p-4 sm:p-8 max-w-5xl mx-auto">
+        <EditAgentClient id={dynamicRoute.param} />
+      </div>
+    );
+  }
+
+  if (dynamicRoute?.type === 'admin-qr') {
+    return (
+      <div className="min-h-screen bg-vb-dark text-white p-4 sm:p-8 max-w-5xl mx-auto">
+        <AgentQRClient id={dynamicRoute.param} />
       </div>
     );
   }
