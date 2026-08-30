@@ -3,16 +3,29 @@ import { Metadata } from 'next';
 import { INITIAL_AGENTS } from '@/lib/seedData';
 import { AgentProfileClient } from './AgentProfileClient';
 
+import { supabaseApi } from '@/lib/supabase';
+
 interface PageProps {
   params: {
     slug: string;
   };
 }
 
-export function generateStaticParams() {
-  return INITIAL_AGENTS.map((agent) => ({
-    slug: agent.slug,
-  }));
+export async function generateStaticParams() {
+  const seedSlugs = INITIAL_AGENTS.map((agent) => ({ slug: agent.slug }));
+  try {
+    const cloudAgents = await supabaseApi.fetchAgents();
+    if (cloudAgents && cloudAgents.length > 0) {
+      const allSlugs = new Set([
+        ...INITIAL_AGENTS.map((a) => a.slug),
+        ...cloudAgents.map((a) => a.slug),
+      ]);
+      return Array.from(allSlugs).map((slug) => ({ slug }));
+    }
+  } catch (e) {
+    // fallback to seed
+  }
+  return seedSlugs;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
