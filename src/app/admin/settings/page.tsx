@@ -50,6 +50,44 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
+      {/* Cloud Database Sync Status Card */}
+      <div className="p-6 rounded-3xl bg-vb-card border border-vb-border shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full ${platformStore.isCloudConnected() ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <span>Cloud Database Engine (Supabase PostgreSQL)</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${platformStore.isCloudConnected() ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
+                  {platformStore.isCloudConnected() ? 'Live Connected' : 'Local Cache Ready'}
+                </span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {platformStore.isCloudConnected()
+                  ? 'All changes made in Super Admin immediately sync live across every client device & phone worldwide.'
+                  : 'Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your environment to enable live cloud sync.'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={async () => {
+              const res = await platformStore.refreshFromCloud();
+              if (res) {
+                alert('Cloud database synchronized successfully!');
+              } else {
+                alert(platformStore.isCloudConnected() ? 'Synced with cloud.' : 'Running in local cache mode. Connect Supabase keys to sync live.');
+              }
+            }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-vb-navy hover:bg-vb-border border border-vb-border text-vb-gold-light text-xs font-semibold transition-all shrink-0"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Sync Cloud DB</span>
+          </button>
+        </div>
+      </div>
+
       <form onSubmit={handleSave} className="p-6 sm:p-8 rounded-3xl bg-vb-card border border-vb-border shadow-xl space-y-6">
         {/* Corporate Section */}
         <div className="space-y-4">

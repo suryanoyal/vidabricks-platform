@@ -3,6 +3,7 @@
 import { Agent, AnalyticsEvent, AnalyticsEventType, BrokerageSettings, LeadInquiry, AdminUser } from './types';
 import { INITIAL_AGENTS, DEFAULT_BROKERAGE_SETTINGS, INITIAL_LEADS } from './seedData';
 import { createAnalyticsEvent } from './analytics';
+import { supabaseApi, isSupabaseConfigured } from './supabase';
 
 const AGENTS_STORAGE_KEY = 'vidabricks_agents_v1';
 const SETTINGS_STORAGE_KEY = 'vidabricks_settings_v1';
@@ -16,6 +17,7 @@ let memorySettings: BrokerageSettings = { ...DEFAULT_BROKERAGE_SETTINGS };
 let memoryAnalytics: AnalyticsEvent[] = [];
 let memoryLeads: LeadInquiry[] = [...INITIAL_LEADS];
 let memoryAdmin: AdminUser | null = null;
+let isCloudSynced = false;
 
 type Listener = () => void;
 const listeners: Set<Listener> = new Set();
@@ -59,7 +61,6 @@ function initializeSeedAnalytics(agents: Agent[]): AnalyticsEvent[] {
   const now = new Date();
   
   agents.forEach((agent) => {
-    // Generate realistic simulated events over the past 30 days
     for (let day = 0; day < 30; day++) {
       const date = new Date(now);
       date.setDate(date.getDate() - day);
@@ -72,32 +73,8 @@ function initializeSeedAnalytics(agents: Agent[]): AnalyticsEvent[] {
           agentName: `${agent.firstName} ${agent.lastName}`,
           eventType: 'profile_view',
           timestamp: new Date(date.getTime() + Math.random() * 86400000).toISOString(),
-          deviceType: Math.random() > 0.25 ? 'mobile' : 'desktop',
-          referrer: Math.random() > 0.4 ? 'whatsapp' : 'qr_code',
-        });
-      }
-
-      const waCount = Math.floor(viewsCount * 0.22);
-      for (let w = 0; w < waCount; w++) {
-        events.push({
-          id: `seed_wa_${agent.id}_${day}_${w}`,
-          agentId: agent.id,
-          agentName: `${agent.firstName} ${agent.lastName}`,
-          eventType: 'whatsapp_click',
-          timestamp: new Date(date.getTime() + Math.random() * 86400000).toISOString(),
-          deviceType: 'mobile',
-        });
-      }
-
-      const callCount = Math.floor(viewsCount * 0.08);
-      for (let c = 0; c < callCount; c++) {
-        events.push({
-          id: `seed_call_${agent.id}_${day}_${c}`,
-          agentId: agent.id,
-          agentName: `${agent.firstName} ${agent.lastName}`,
-          eventType: 'call_click',
-          timestamp: new Date(date.getTime() + Math.random() * 86400000).toISOString(),
-          deviceType: 'mobile',
+          deviceType: Math.random() > 0.3 ? 'mobile' : 'desktop',
+          referrer: 'https://agents.vidabricks.com',
         });
       }
     }
@@ -106,16 +83,78 @@ function initializeSeedAnalytics(agents: Agent[]): AnalyticsEvent[] {
   return events;
 }
 
+// Background sync from Supabase if configured
+async function syncFromCloud() {
+  if (!isSupabaseConfigured || typeof window === 'undefined' || isCloudSynced) return;
+  isCloudSynced = true;
+
+  try {
+    const cloudAgents = await supabaseApi.fetchAgents();
+    if (cloudAgents && cloudAgents.length > 0) {
+      memoryAgents = cloudAgents;
+      setLocalItem(AGENTS_STORAGE_KEY, cloudAgents);
+      notifyListeners();
+    }
+
+    const cloudSettings = await supabaseApi.fetchSettings();
+    if (cloudSettings) {
+      memorySettings = { ...DEFAULT_BROKERAGE_SETTINGS, ...cloudSettings };
+      setLocalItem(SETTINGS_STORAGE_KEY, memorySettings);
+      notifyListeners();
+    }
+
+    const cloudLeads = await supabaseApi.fetchLeads();
+    if (cloudLeads && cloudLeads.length > 0) {
+      memoryLeads = cloudLeads;
+      setLocalItem(LEADS_STORAGE_KEY, cloudLeads);
+      notifyListeners();
+    }
+  } catch (e) {
+    console.warn('Cloud sync background error:', e);
+  }
+}
+
+// Trigger initial cloud sync when in browser
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    syncFromCloud();
+  }, 100);
+}
+
 export const platformStore = {
+  isCloudConnected(): boolean {
+    return isSupabaseConfigured;
+  },
+
+  async refreshFromCloud(): Promise<boolean> {
+    if (!isSupabaseConfigured) return false;
+    try {
+      const cloudAgents = await supabaseApi.fetchAgents();
+      if (cloudAgents && cloudAgents.length > 0) {
+        memoryAgents = cloudAgents;
+        setLocalItem(AGENTS_STORAGE_KEY, cloudAgents);
+      }
+      const cloudSettings = await supabaseApi.fetchSettings();
+      if (cloudSettings) {
+        memorySettings = { ...DEFAULT_BROKERAGE_SETTINGS, ...cloudSettings };
+        setLocalItem(SETTINGS_STORAGE_KEY, memorySettings);
+      }
+      const cloudLeads = await supabaseApi.fetchLeads();
+      if (cloudLeads) {
+        memoryLeads = cloudLeads;
+        setLocalItem(LEADS_STORAGE_KEY, cloudLeads);
+      }
+      notifyListeners();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  },
+
   // --- AGENTS ---
   getAgents(): Agent[] {
     if (typeof window === 'undefined') return memoryAgents;
-    const stored = getLocalItem<Agent[]>(AGENTS_STORAGE_KEY, []);
-    if (!stored || stored.length === 0) {
-      setLocalItem(AGENTS_STORAGE_KEY, INITIAL_AGENTS);
-      memoryAgents = [...INITIAL_AGENTS];
-      return memoryAgents;
-    }
+    const stored = getLocalItem<Agent[]>(AGENTS_STORAGE_KEY, INITIAL_AGENTS);
     memoryAgents = stored;
     return stored;
   },
@@ -134,43 +173,62 @@ export const platformStore = {
     const agents = this.getAgents();
     const now = new Date().toISOString();
 
+    let targetAgent: Agent;
+
     if (agentData.id) {
       // Update existing
       const index = agents.findIndex((a) => a.id === agentData.id);
       if (index !== -1) {
-        const updated: Agent = {
+        targetAgent = {
           ...agents[index],
           ...agentData,
           updatedAt: now,
         };
-        agents[index] = updated;
-        setLocalItem(AGENTS_STORAGE_KEY, agents);
-        memoryAgents = agents;
-        notifyListeners();
-        return updated;
+        agents[index] = targetAgent;
+      } else {
+        targetAgent = {
+          ...agentData,
+          id: agentData.id,
+          profileViews: 0,
+          whatsappClicks: 0,
+          callClicks: 0,
+          emailClicks: 0,
+          vcardDownloads: 0,
+          shares: 0,
+          inquiriesCount: 0,
+          createdAt: now,
+          updatedAt: now,
+        };
+        agents.unshift(targetAgent);
       }
+    } else {
+      // Create new
+      targetAgent = {
+        ...agentData,
+        id: 'agent_' + Math.random().toString(36).substring(2, 9) + Date.now(),
+        profileViews: 0,
+        whatsappClicks: 0,
+        callClicks: 0,
+        emailClicks: 0,
+        vcardDownloads: 0,
+        shares: 0,
+        inquiriesCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+      agents.unshift(targetAgent);
     }
 
-    // Create new
-    const newAgent: Agent = {
-      ...agentData,
-      id: 'agent_' + Math.random().toString(36).substring(2, 9) + Date.now(),
-      profileViews: 0,
-      whatsappClicks: 0,
-      callClicks: 0,
-      emailClicks: 0,
-      vcardDownloads: 0,
-      shares: 0,
-      inquiriesCount: 0,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    agents.unshift(newAgent);
     setLocalItem(AGENTS_STORAGE_KEY, agents);
     memoryAgents = agents;
     notifyListeners();
-    return newAgent;
+
+    // Async save to Supabase Cloud
+    if (isSupabaseConfigured) {
+      supabaseApi.saveAgent(targetAgent);
+    }
+
+    return targetAgent;
   },
 
   deleteAgent(id: string): boolean {
@@ -180,6 +238,10 @@ export const platformStore = {
       setLocalItem(AGENTS_STORAGE_KEY, filtered);
       memoryAgents = filtered;
       notifyListeners();
+
+      if (isSupabaseConfigured) {
+        supabaseApi.deleteAgent(id);
+      }
       return true;
     }
     return false;
@@ -194,6 +256,10 @@ export const platformStore = {
       setLocalItem(AGENTS_STORAGE_KEY, agents);
       memoryAgents = agents;
       notifyListeners();
+
+      if (isSupabaseConfigured) {
+        supabaseApi.saveAgent(agent);
+      }
       return agent;
     }
     return undefined;
@@ -204,7 +270,6 @@ export const platformStore = {
     const agent = this.getAgentById(agentId);
     if (!agent) return;
 
-    // 1. Update agent metric counter
     if (eventType === 'profile_view') agent.profileViews++;
     if (eventType === 'whatsapp_click') agent.whatsappClicks++;
     if (eventType === 'call_click') agent.callClicks++;
@@ -218,23 +283,32 @@ export const platformStore = {
     if (index !== -1) {
       agents[index] = agent;
       setLocalItem(AGENTS_STORAGE_KEY, agents);
+      memoryAgents = agents;
     }
 
-    // 2. Append event log
-    const event = createAnalyticsEvent(agent.id, `${agent.firstName} ${agent.lastName}`, eventType, details);
-    const events = this.getAnalyticsEvents();
-    events.unshift(event);
-    // Keep max 2000 events
-    const trimmed = events.slice(0, 2000);
-    setLocalItem(ANALYTICS_STORAGE_KEY, trimmed);
-    memoryAnalytics = trimmed;
+    const event = createAnalyticsEvent(
+      agentId,
+      `${agent.firstName} ${agent.lastName}`,
+      eventType,
+      details
+    );
+    const analytics = this.getAnalytics();
+    analytics.unshift(event);
+    setLocalItem(ANALYTICS_STORAGE_KEY, analytics);
+    memoryAnalytics = analytics;
+
     notifyListeners();
+
+    // Async cloud tracking
+    if (isSupabaseConfigured) {
+      supabaseApi.trackEvent(agentId, eventType, details);
+    }
   },
 
-  getAnalyticsEvents(): AnalyticsEvent[] {
+  getAnalytics(): AnalyticsEvent[] {
     if (typeof window === 'undefined') return memoryAnalytics;
     let stored = getLocalItem<AnalyticsEvent[]>(ANALYTICS_STORAGE_KEY, []);
-    if (!stored || stored.length === 0) {
+    if (stored.length === 0) {
       stored = initializeSeedAnalytics(this.getAgents());
       setLocalItem(ANALYTICS_STORAGE_KEY, stored);
     }
@@ -242,52 +316,85 @@ export const platformStore = {
     return stored;
   },
 
+  getAnalyticsEvents(): AnalyticsEvent[] {
+    return this.getAnalytics();
+  },
+
+  getAgentAnalytics(agentId: string): AnalyticsEvent[] {
+    const all = this.getAnalytics();
+    return all.filter((e) => e.agentId === agentId);
+  },
+
   // --- LEADS ---
   getLeads(): LeadInquiry[] {
     if (typeof window === 'undefined') return memoryLeads;
-    let stored = getLocalItem<LeadInquiry[]>(LEADS_STORAGE_KEY, []);
-    if (!stored || stored.length === 0) {
-      setLocalItem(LEADS_STORAGE_KEY, INITIAL_LEADS);
-      stored = INITIAL_LEADS;
-    }
+    const stored = getLocalItem<LeadInquiry[]>(LEADS_STORAGE_KEY, INITIAL_LEADS);
     memoryLeads = stored;
     return stored;
   },
 
-  addLead(lead: Omit<LeadInquiry, 'id' | 'createdAt' | 'status'>): LeadInquiry {
+  submitLead(leadData: Omit<LeadInquiry, 'id' | 'createdAt' | 'status'>): LeadInquiry {
     const leads = this.getLeads();
     const newLead: LeadInquiry = {
-      ...lead,
+      ...leadData,
       id: 'lead_' + Math.random().toString(36).substring(2, 9) + Date.now(),
-      createdAt: new Date().toISOString(),
       status: 'new',
+      createdAt: new Date().toISOString(),
     };
+
     leads.unshift(newLead);
     setLocalItem(LEADS_STORAGE_KEY, leads);
     memoryLeads = leads;
 
-    // Track analytics event
-    this.trackEvent(lead.agentId, 'inquiry_submit', {
-      clientName: lead.clientName,
-      property: lead.propertyInterest,
+    this.trackEvent(leadData.agentId, 'inquiry_submit', {
+      propertyInterest: leadData.propertyInterest,
+      budgetRange: leadData.budgetRange,
     });
 
     notifyListeners();
+
+    // Async cloud save
+    if (isSupabaseConfigured) {
+      supabaseApi.saveLead(newLead);
+    }
+
     return newLead;
   },
 
-  updateLeadStatus(leadId: string, status: 'new' | 'contacted' | 'closed'): void {
+  addLead(leadData: Omit<LeadInquiry, 'id' | 'createdAt' | 'status'>): LeadInquiry {
+    return this.submitLead(leadData);
+  },
+
+  updateLeadStatus(leadId: string, status: LeadInquiry['status']): LeadInquiry | undefined {
     const leads = this.getLeads();
-    const lead = leads.find((l) => l.id === leadId);
-    if (lead) {
-      lead.status = status;
+    const index = leads.findIndex((l) => l.id === leadId);
+    if (index !== -1) {
+      leads[index].status = status;
       setLocalItem(LEADS_STORAGE_KEY, leads);
       memoryLeads = leads;
       notifyListeners();
+
+      if (isSupabaseConfigured) {
+        supabaseApi.saveLead(leads[index]);
+      }
+      return leads[index];
     }
+    return undefined;
   },
 
-  // --- BROKERAGE SETTINGS ---
+  deleteLead(leadId: string): boolean {
+    const leads = this.getLeads();
+    const filtered = leads.filter((l) => l.id !== leadId);
+    if (filtered.length !== leads.length) {
+      setLocalItem(LEADS_STORAGE_KEY, filtered);
+      memoryLeads = filtered;
+      notifyListeners();
+      return true;
+    }
+    return false;
+  },
+
+  // --- SETTINGS ---
   getSettings(): BrokerageSettings {
     if (typeof window === 'undefined') return memorySettings;
     const stored = getLocalItem<BrokerageSettings>(SETTINGS_STORAGE_KEY, DEFAULT_BROKERAGE_SETTINGS);
@@ -296,16 +403,24 @@ export const platformStore = {
     return merged;
   },
 
-  updateSettings(settings: Partial<BrokerageSettings>): BrokerageSettings {
+  saveSettings(newSettings: Partial<BrokerageSettings>): BrokerageSettings {
     const current = this.getSettings();
-    const updated = { ...current, ...settings };
+    const updated = { ...current, ...newSettings };
     setLocalItem(SETTINGS_STORAGE_KEY, updated);
     memorySettings = updated;
     notifyListeners();
+
+    if (isSupabaseConfigured) {
+      supabaseApi.saveSettings(updated);
+    }
     return updated;
   },
 
-  // --- ADMIN AUTH ---
+  updateSettings(newSettings: Partial<BrokerageSettings>): BrokerageSettings {
+    return this.saveSettings(newSettings);
+  },
+
+  // --- AUTHENTICATION ---
   getAdminUser(): AdminUser | null {
     if (typeof window === 'undefined') return memoryAdmin;
     const stored = getLocalItem<AdminUser | null>(AUTH_STORAGE_KEY, null);
@@ -317,7 +432,6 @@ export const platformStore = {
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanPass = (pass || '').trim();
 
-    // Verify Super Admin credentials
     if (cleanEmail === 'admin@vidabricks.com' && cleanPass === 'VidaDubai2026!') {
       const user: AdminUser = {
         id: 'admin-super-1',
@@ -354,8 +468,8 @@ export const platformStore = {
     }
     memoryAgents = [...INITIAL_AGENTS];
     memorySettings = { ...DEFAULT_BROKERAGE_SETTINGS };
-    memoryLeads = [...INITIAL_LEADS];
     memoryAnalytics = [];
+    memoryLeads = [...INITIAL_LEADS];
     notifyListeners();
   },
 };
