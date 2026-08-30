@@ -36,6 +36,9 @@ export default function AdminAgentsPage() {
 
   useEffect(() => {
     setAgents(platformStore.getAgents());
+    platformStore.refreshFromCloud().then(() => {
+      setAgents(platformStore.getAgents());
+    });
     const unsubscribe = subscribeToStore(() => {
       setAgents(platformStore.getAgents());
     });

@@ -37,7 +37,10 @@ export const AgentProfileClient: React.FC<AgentProfileClientProps> = ({
   initialAgent,
   slug,
 }) => {
-  const cleanSlug = (slug || '').replace(/^\/+|\/+$/g, '').replace(/^agents\//, '');
+  const cleanSlug = (slug || '')
+    .replace(/^\/+|\/+$/g, '')
+    .replace(/^agents\//, '')
+    .toLowerCase();
   const [agent, setAgent] = useState<Agent | undefined>(initialAgent);
   const [settings, setSettings] = useState<BrokerageSettings>();
   const [showShareModal, setShowShareModal] = useState(false);
