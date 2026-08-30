@@ -17,9 +17,9 @@ export default function AdminLoginPage() {
     // If already logged in, go directly to dashboard
     const user = platformStore.getAdminUser();
     if (user) {
-      router.push('/admin/dashboard');
+      window.location.href = '/admin/dashboard/';
     }
-  }, [router]);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
     const result = platformStore.login(email, password);
 
     if (result.success) {
-      window.location.href = '/admin/dashboard';
+      window.location.href = '/admin/dashboard/';
     } else {
       setError(result.error || 'Authentication failed. Invalid email or password.');
       setLoading(false);

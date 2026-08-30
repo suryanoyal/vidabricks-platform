@@ -16,9 +16,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isLoaded, setIsLoaded] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const isLoginPage = pathname?.includes('/admin/login');
+
   useEffect(() => {
     // If on login page, skip guard
-    if (pathname === '/admin/login') {
+    if (isLoginPage) {
       setIsLoaded(true);
       return;
     }
@@ -26,7 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const checkAuth = () => {
       const currentUser = platformStore.getAdminUser();
       if (!currentUser) {
-        router.push('/admin/login');
+        window.location.href = '/admin/login/';
         return;
       }
       setUser(currentUser);
@@ -41,15 +43,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     });
 
     return () => unsubscribe();
-  }, [pathname, router]);
+  }, [pathname, isLoginPage]);
 
   const handleLogout = () => {
     platformStore.logout();
-    router.push('/admin/login');
+    window.location.href = '/admin/login/';
   };
 
-  // If on login page, render children without admin sidebar
-  if (pathname === '/admin/login') {
+  // If on login page, render children directly without admin layout wrapper
+  if (isLoginPage) {
     return <>{children}</>;
   }
 
