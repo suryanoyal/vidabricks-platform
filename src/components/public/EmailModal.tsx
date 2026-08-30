@@ -145,11 +145,6 @@ export const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, agent }
             <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
           </button>
         </div>
-
-        {/* Footer info */}
-        <p className="text-[11px] text-slate-400 text-center leading-relaxed pt-1">
-          Vidabricks certified consultant response time is typically within 15 minutes.
-        </p>
       </div>
     </div>
   );
