@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!agent) {
     return {
-      title: 'Agent Profile | Vidabricks Real Estate Dubai',
+      title: 'Agents | Vidabricks',
       description: 'Connect with a certified luxury property consultant at Vidabricks Real Estate, Dubai.',
     };
   }

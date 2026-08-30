@@ -24,7 +24,7 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: 'Vidabricks Real Estate Dubai | Elite Broker Digital Cards & QR Platform',
+  title: 'Agents | Vidabricks',
   description:
     'Official digital business card platform for Vidabricks Real Estate, Dubai. Connect directly with certified luxury property consultants and off-plan investment specialists.',
   keywords: [
@@ -42,10 +42,10 @@ export const metadata: Metadata = {
     icon: '/favicon.ico',
   },
   openGraph: {
-    title: 'Vidabricks Real Estate Dubai | Digital Broker Cards',
+    title: 'Agents | Vidabricks',
     description:
       'Connect with certified luxury real estate brokers in Dubai. Instant WhatsApp contact, verified RERA credentials, and curated property portfolios.',
-    url: 'https://vidabricks.com',
+    url: 'https://agents.vidabricks.com',
     siteName: 'Vidabricks Real Estate',
     images: [
       {
