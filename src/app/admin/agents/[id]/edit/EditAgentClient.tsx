@@ -116,7 +116,7 @@ export const EditAgentClient: React.FC<EditAgentClientProps> = ({ id }) => {
         </div>
       </div>
 
-      <AgentForm initialData={agent} isEditing={true} />
+      <AgentForm key={agent.id} initialData={agent} isEditing={true} />
     </div>
   );
 };

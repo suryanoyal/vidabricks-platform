@@ -105,6 +105,44 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
     ...initialData,
   });
 
+  // Sync initialData when loaded asynchronously from Supabase
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        firstName: initialData.firstName || '',
+        lastName: initialData.lastName || '',
+        slug: initialData.slug || '',
+        photo: initialData.photo || LUXURY_AVATAR_PRESETS[0],
+        jobTitle: initialData.jobTitle || 'Senior Property Consultant',
+        reraNumber: initialData.reraNumber || '',
+        phone: initialData.phone || '+971',
+        whatsapp: initialData.whatsapp || initialData.phone || '+971',
+        email: initialData.email || '',
+        bio: initialData.bio || '',
+        languages: initialData.languages || ['English', 'Arabic'],
+        nationality: initialData.nationality || '',
+        experienceYears: initialData.experienceYears ?? 5,
+        location: initialData.location || 'Dubai, UAE',
+        specialisations: initialData.specialisations || ['Off-Plan', 'Luxury Properties'],
+        areas: initialData.areas || ['Palm Jumeirah', 'Downtown Dubai'],
+        social: {
+          linkedin: '',
+          instagram: '',
+          x: '',
+          tiktok: '',
+          youtube: '',
+          website: '',
+          ...(initialData.social || {}),
+        },
+        customWhatsappMessage: initialData.customWhatsappMessage || '',
+        status: initialData.status || 'active',
+        isFeatured: initialData.isFeatured ?? true,
+        focusProperties: initialData.focusProperties || [],
+      });
+      setSlugManuallyEdited(Boolean(initialData.slug));
+    }
+  }, [initialData]);
+
   const [customSpec, setCustomSpec] = useState('');
   const [customArea, setCustomArea] = useState('');
   const [customLang, setCustomLang] = useState('');
