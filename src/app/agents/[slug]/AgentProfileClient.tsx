@@ -26,6 +26,8 @@ import { AgentProperties } from '@/components/public/AgentProperties';
 import { LeadInquiryForm } from '@/components/public/LeadInquiryForm';
 import { SocialLinksGrid } from '@/components/public/SocialLinksGrid';
 
+import { supabase, mapDbAgentToAgent, isSupabaseConfigured } from '@/lib/supabase';
+
 interface AgentProfileClientProps {
   initialAgent?: Agent;
   slug: string;
@@ -35,21 +37,69 @@ export const AgentProfileClient: React.FC<AgentProfileClientProps> = ({
   initialAgent,
   slug,
 }) => {
+  const cleanSlug = (slug || '').replace(/^\/+|\/+$/g, '').replace(/^agents\//, '');
   const [agent, setAgent] = useState<Agent | undefined>(initialAgent);
   const [settings, setSettings] = useState<BrokerageSettings>();
   const [showShareModal, setShowShareModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [loading, setLoading] = useState<boolean>(!initialAgent);
 
   useEffect(() => {
-    // Load fresh data from store
-    const found = platformStore.getAgentBySlug(slug);
+    // 1. Try to load from store first
+    const found = platformStore.getAgentBySlug(cleanSlug);
     if (found) {
       setAgent(found);
-      // Track profile view
+      setLoading(false);
       platformStore.trackEvent(found.id, 'profile_view');
     }
+
+    // 2. Fetch fresh from Supabase
+    const fetchCloudAgent = async () => {
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('agents')
+            .select('*')
+            .ilike('slug', cleanSlug)
+            .maybeSingle();
+
+          if (data && !error) {
+            const mapped = mapDbAgentToAgent(data);
+            setAgent(mapped);
+            setLoading(false);
+            platformStore.trackEvent(mapped.id, 'profile_view');
+            return;
+          }
+        } catch (e) {
+          console.warn('Supabase fetch error for agent:', e);
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchCloudAgent();
     setSettings(platformStore.getSettings());
-  }, [slug]);
+  }, [cleanSlug]);
+
+  // Loading State
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-vb-dark flex flex-col justify-between text-white vb-bg-glow">
+        <AgentHeader />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="w-16 h-16 rounded-full border-2 border-vb-gold border-t-transparent animate-spin mx-auto shadow-gold-glow" />
+            <p className="text-sm font-display font-semibold text-vb-gold-light tracking-wide animate-pulse">
+              Loading Luxury Digital Card...
+            </p>
+          </div>
+        </div>
+        <footer className="py-6 text-center text-xs text-vb-grey-text border-t border-vb-border">
+          © {new Date().getFullYear()} Vidabricks Real Estate LLC • Dubai, UAE
+        </footer>
+      </div>
+    );
+  }
 
   // Inactive Profile Branded State
   if (agent && agent.status === 'inactive') {

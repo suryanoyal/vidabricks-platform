@@ -1,10 +1,42 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Globe, ArrowRight } from 'lucide-react';
 import { AgentHeader } from '@/components/public/AgentHeader';
+import { AgentProfileClient } from './agents/[slug]/AgentProfileClient';
 
 export default function NotFound() {
+  const [dynamicAgentSlug, setDynamicAgentSlug] = useState<string | null>(null);
+  const [isChecking, setIsChecking] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      
+      // Match /agents/[slug] or /agents/[slug]/
+      const agentMatch = path.match(/\/agents\/([^/]+)/);
+      if (agentMatch && agentMatch[1]) {
+        setDynamicAgentSlug(agentMatch[1]);
+        setIsChecking(false);
+        return;
+      }
+    }
+    setIsChecking(false);
+  }, []);
+
+  // If URL is an agent card, dynamically render the client profile component
+  if (dynamicAgentSlug) {
+    return <AgentProfileClient slug={dynamicAgentSlug} />;
+  }
+
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-vb-dark flex items-center justify-center text-white">
+        <div className="w-8 h-8 rounded-full border-2 border-vb-gold border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-vb-dark text-white flex flex-col justify-between vb-bg-glow">
       <AgentHeader />
