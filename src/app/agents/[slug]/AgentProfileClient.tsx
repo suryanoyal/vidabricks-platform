@@ -67,6 +67,7 @@ export const AgentProfileClient: React.FC<AgentProfileClientProps> = ({
             const mapped = mapDbAgentToAgent(data);
             setAgent(mapped);
             setLoading(false);
+            platformStore.saveAgent(mapped);
             platformStore.trackEvent(mapped.id, 'profile_view');
             return;
           }
@@ -79,6 +80,31 @@ export const AgentProfileClient: React.FC<AgentProfileClientProps> = ({
 
     fetchCloudAgent();
     setSettings(platformStore.getSettings());
+
+    // 3. Real-time live sync across devices
+    let channel: any = null;
+    if (isSupabaseConfigured && supabase) {
+      channel = supabase
+        .channel(`agent_${cleanSlug}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'agents', filter: `slug=eq.${cleanSlug}` },
+          (payload: any) => {
+            if (payload.new) {
+              const updated = mapDbAgentToAgent(payload.new);
+              setAgent(updated);
+              platformStore.saveAgent(updated);
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    return () => {
+      if (channel && supabase) {
+        supabase.removeChannel(channel);
+      }
+    };
   }, [cleanSlug]);
 
   // Loading State

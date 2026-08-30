@@ -2,19 +2,21 @@ import { createClient } from '@supabase/supabase-js';
 import { Agent, BrokerageSettings, LeadInquiry } from './types';
 import { INITIAL_AGENTS, DEFAULT_BROKERAGE_SETTINGS } from './seedData';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const SUPABASE_PROJECT_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mzrpuvbvfbhtxurhxjbh.supabase.co';
+const SUPABASE_PROJECT_KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_kMZr-auUJGOHRhnnegr_sg_rR6pjr4b';
 
 export const isSupabaseConfigured = Boolean(
-  supabaseUrl &&
-  supabaseAnonKey &&
-  supabaseUrl.startsWith('https://') &&
-  !supabaseUrl.includes('placeholder') &&
-  !supabaseUrl.includes('your-project')
+  SUPABASE_PROJECT_URL &&
+  SUPABASE_PROJECT_KEY &&
+  SUPABASE_PROJECT_URL.startsWith('https://') &&
+  !SUPABASE_PROJECT_URL.includes('placeholder') &&
+  !SUPABASE_PROJECT_URL.includes('your-project')
 );
 
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(SUPABASE_PROJECT_URL, SUPABASE_PROJECT_KEY)
   : null;
 
 // Database record interfaces for PostgreSQL mapping
