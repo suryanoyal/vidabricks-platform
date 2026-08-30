@@ -149,6 +149,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(Boolean(initialData?.slug));
   const [slugError, setSlugError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState<'personal' | 'contact' | 'professional' | 'social' | 'settings'>('personal');
 
   // Auto-generate slug from name if not manually edited
@@ -165,26 +166,42 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
       setSlugError('Slug cannot be empty');
       return false;
     }
-    const existing = platformStore.getAgentBySlug(slugToTest);
-    if (existing && existing.id !== initialData?.id) {
+    const cleanTest = slugToTest.toLowerCase();
+    const existing = platformStore.getAgentBySlug(cleanTest);
+    
+    // If editing and the slug belongs to this agent, it's valid!
+    if (existing && isEditing) {
+      if (
+        existing.id === initialData?.id ||
+        existing.slug.toLowerCase() === (initialData?.slug || '').toLowerCase()
+      ) {
+        setSlugError('');
+        return true;
+      }
       setSlugError('This URL slug is already taken by another agent.');
       return false;
     }
+
+    if (existing && !isEditing) {
+      setSlugError('This URL slug is already taken by another agent.');
+      return false;
+    }
+
     setSlugError('');
     return true;
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setFormData((prev) => ({ ...prev, photo: event.target?.result as string }));
-        }
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setFormData((prev) => ({ ...prev, photo: reader.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const toggleSpecialisation = (spec: string) => {
@@ -261,6 +278,8 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
     }
 
     if (!validateSlug(formData.slug || '')) {
+      setActiveTab('settings');
+      alert(slugError || 'This URL slug is already taken by another agent.');
       return;
     }
 
@@ -293,12 +312,16 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
       });
 
       setIsSaving(false);
-      // Redirect to QR Studio for newly created agent or back to agents directory
-      if (!isEditing) {
-        window.location.href = `/admin/agents/${saved.id}/qr/`;
-      } else {
-        window.location.href = '/admin/agents/';
-      }
+      setSaveSuccess(true);
+
+      // Brief delay so user sees success indicator then redirect
+      setTimeout(() => {
+        if (!isEditing) {
+          window.location.href = `/admin/agents/${saved.id}/qr/`;
+        } else {
+          window.location.href = '/admin/agents/';
+        }
+      }, 700);
     } catch (err) {
       console.error('Error saving agent:', err);
       setIsSaving(false);
@@ -310,6 +333,53 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
     <div className="w-full grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
       {/* Left: Comprehensive Add/Edit Form */}
       <div className="xl:col-span-8 space-y-6">
+        {/* Sticky Quick Action Save Bar */}
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-vb-card via-vb-navy to-vb-card border border-vb-gold/50 shadow-xl flex items-center justify-between gap-4 sticky top-4 z-20 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl overflow-hidden border border-vb-gold/40 shrink-0">
+              <img src={formData.photo} alt="Current photo" className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-white font-display">
+                {formData.firstName || formData.lastName
+                  ? `${formData.firstName} ${formData.lastName}`
+                  : 'New Broker Profile'}
+              </h4>
+              <p className="text-[11px] text-vb-gold-light font-mono">
+                /agents/{(formData.slug || 'slug').toLowerCase()}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {saveSuccess ? (
+              <div className="px-5 py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold flex items-center gap-1.5 animate-fade-in shadow-lg">
+                <Check className="w-4 h-4" />
+                <span>Saved & Synced Live!</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSaving}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-vb-gold to-vb-gold-light hover:brightness-110 active:scale-95 text-vb-black font-extrabold text-xs uppercase tracking-wider shadow-gold-glow flex items-center gap-1.5 transition-all disabled:opacity-50"
+              >
+                {isSaving ? (
+                  <>
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-vb-black border-t-transparent animate-spin" />
+                    <span>Saving to Cloud...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{isEditing ? 'Save Changes' : 'Save & Generate QR'}</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Navigation Section Tabs */}
         <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-vb-card border border-vb-border overflow-x-auto">
           {[
@@ -492,13 +562,22 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2">
+              <div className="flex items-center justify-between pt-4 border-t border-vb-border">
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-vb-gold to-vb-gold-light hover:brightness-110 text-vb-black font-extrabold text-xs uppercase tracking-wider shadow-gold-subtle flex items-center gap-1.5 transition-all disabled:opacity-50"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{isEditing ? 'Save Changes' : 'Save & Generate QR'}</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('contact')}
-                  className="px-6 py-2.5 rounded-xl bg-vb-gold hover:bg-vb-gold-light text-vb-black text-xs font-bold transition-all"
+                  className="px-5 py-2.5 rounded-xl bg-vb-navy hover:bg-vb-border text-slate-200 text-xs font-bold transition-all flex items-center gap-1"
                 >
-                  Continue to Contact Details →
+                  <span>Continue to Contact</span>
+                  <span>→</span>
                 </button>
               </div>
             </div>
@@ -572,7 +651,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
                 </p>
               </div>
 
-              <div className="flex justify-between pt-2">
+              <div className="flex items-center justify-between pt-4 border-t border-vb-border">
                 <button
                   type="button"
                   onClick={() => setActiveTab('personal')}
@@ -580,13 +659,24 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
                 >
                   ← Back
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('professional')}
-                  className="px-6 py-2.5 rounded-xl bg-vb-gold hover:bg-vb-gold-light text-vb-black text-xs font-bold transition-all"
-                >
-                  Continue to Specialisations →
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-vb-gold to-vb-gold-light hover:brightness-110 text-vb-black font-extrabold text-xs uppercase tracking-wider shadow-gold-subtle flex items-center gap-1.5 transition-all disabled:opacity-50"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{isEditing ? 'Save Changes' : 'Save & Generate QR'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('professional')}
+                    className="px-5 py-2.5 rounded-xl bg-vb-navy hover:bg-vb-border text-slate-200 text-xs font-bold transition-all flex items-center gap-1"
+                  >
+                    <span>Continue to Specialisations</span>
+                    <span>→</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -724,7 +814,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
                 </div>
               </div>
 
-              <div className="flex justify-between pt-2">
+              <div className="flex items-center justify-between pt-4 border-t border-vb-border">
                 <button
                   type="button"
                   onClick={() => setActiveTab('contact')}
@@ -732,13 +822,24 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
                 >
                   ← Back
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('social')}
-                  className="px-6 py-2.5 rounded-xl bg-vb-gold hover:bg-vb-gold-light text-vb-black text-xs font-bold transition-all"
-                >
-                  Continue to Social Links →
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-vb-gold to-vb-gold-light hover:brightness-110 text-vb-black font-extrabold text-xs uppercase tracking-wider shadow-gold-subtle flex items-center gap-1.5 transition-all disabled:opacity-50"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{isEditing ? 'Save Changes' : 'Save & Generate QR'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('social')}
+                    className="px-5 py-2.5 rounded-xl bg-vb-navy hover:bg-vb-border text-slate-200 text-xs font-bold transition-all flex items-center gap-1"
+                  >
+                    <span>Continue to Social</span>
+                    <span>→</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -864,7 +965,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
                 </div>
               </div>
 
-              <div className="flex justify-between pt-2">
+              <div className="flex items-center justify-between pt-4 border-t border-vb-border">
                 <button
                   type="button"
                   onClick={() => setActiveTab('professional')}
@@ -872,13 +973,24 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
                 >
                   ← Back
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('settings')}
-                  className="px-6 py-2.5 rounded-xl bg-vb-gold hover:bg-vb-gold-light text-vb-black text-xs font-bold transition-all"
-                >
-                  Continue to Profile Settings →
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-vb-gold to-vb-gold-light hover:brightness-110 text-vb-black font-extrabold text-xs uppercase tracking-wider shadow-gold-subtle flex items-center gap-1.5 transition-all disabled:opacity-50"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{isEditing ? 'Save Changes' : 'Save & Generate QR'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('settings')}
+                    className="px-5 py-2.5 rounded-xl bg-vb-navy hover:bg-vb-border text-slate-200 text-xs font-bold transition-all flex items-center gap-1"
+                  >
+                    <span>Continue to Settings</span>
+                    <span>→</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}

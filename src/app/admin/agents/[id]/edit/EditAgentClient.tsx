@@ -19,21 +19,21 @@ export const EditAgentClient: React.FC<EditAgentClientProps> = ({ id }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Try local memory store
-    const found = platformStore.getAgentById(id);
+    // 1. Try local memory store by ID or slug
+    const found = platformStore.getAgentById(id) || platformStore.getAgentBySlug(id);
     if (found) {
       setAgent(found);
       setLoading(false);
     }
 
-    // 2. Fetch fresh from Supabase
+    // 2. Fetch fresh from Supabase by ID or slug
     const fetchCloudAgent = async () => {
       if (isSupabaseConfigured && supabase) {
         try {
           const { data, error } = await supabase
             .from('agents')
             .select('*')
-            .eq('id', id)
+            .or(`id.eq.${id},slug.eq.${id}`)
             .maybeSingle();
 
           if (data && !error) {
