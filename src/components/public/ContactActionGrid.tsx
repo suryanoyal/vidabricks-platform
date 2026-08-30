@@ -6,6 +6,7 @@ import { Agent, BrokerageSettings } from '@/lib/types';
 import { getWhatsAppUrl } from '@/lib/utils';
 import { downloadVCard } from '@/lib/vcard';
 import { platformStore } from '@/lib/store';
+import { EmailModal } from './EmailModal';
 import confetti from 'canvas-confetti';
 
 interface ContactActionGridProps {
@@ -20,6 +21,7 @@ export const ContactActionGrid: React.FC<ContactActionGridProps> = ({
   onOpenShare,
 }) => {
   const [savedContact, setSavedContact] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
 
   const defaultMsg =
     agent.customWhatsappMessage ||
@@ -41,9 +43,7 @@ export const ContactActionGrid: React.FC<ContactActionGridProps> = ({
   };
 
   const handleEmailClick = () => {
-    platformStore.trackEvent(agent.id, 'email_click', {
-      email: agent.email,
-    });
+    setShowEmailModal(true);
   };
 
   const handleSaveContact = () => {
@@ -72,46 +72,50 @@ export const ContactActionGrid: React.FC<ContactActionGridProps> = ({
   };
 
   return (
-    <div className="w-full space-y-3">
-      {/* 1. PRIMARY HERO CTA: WhatsApp */}
-      <button
-        onClick={handleWhatsAppClick}
-        id="btn-whatsapp-primary"
-        className="w-full relative overflow-hidden group py-4 px-6 rounded-2xl bg-gradient-to-r from-[#22c55e] via-[#25D366] to-[#16a34a] text-white font-semibold text-base sm:text-lg flex items-center justify-center gap-3 shadow-whatsapp-glow transition-all transform active:scale-[0.98] hover:brightness-105"
-      >
-        {/* Shimmer highlight */}
-        <div className="absolute inset-0 w-1/2 h-full bg-white/20 skew-x-12 -translate-x-full group-hover:animate-shimmer pointer-events-none" />
-        
-        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-          <MessageCircle className="w-5 h-5 fill-white text-transparent" />
+    <>
+      <EmailModal
+        isOpen={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+        agent={agent}
+      />
+      <div className="w-full space-y-3">
+        {/* 1. PRIMARY HERO CTA: WhatsApp */}
+        <button
+          onClick={handleWhatsAppClick}
+          id="btn-whatsapp-primary"
+          className="w-full relative overflow-hidden group py-4 px-6 rounded-2xl bg-gradient-to-r from-[#22c55e] via-[#25D366] to-[#16a34a] text-white font-semibold text-base sm:text-lg flex items-center justify-center gap-3 shadow-whatsapp-glow transition-all transform active:scale-[0.98] hover:brightness-105"
+        >
+          {/* Shimmer highlight */}
+          <div className="absolute inset-0 w-1/2 h-full bg-white/20 skew-x-12 -translate-x-full group-hover:animate-shimmer pointer-events-none" />
+          
+          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+            <MessageCircle className="w-5 h-5 fill-white text-transparent" />
+          </div>
+          <span className="tracking-wide">Chat on WhatsApp</span>
+        </button>
+
+        {/* 2. SECONDARY ACTION BUTTONS: Call & Email */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <a
+            href={`tel:${agent.phone}`}
+            onClick={handleCallClick}
+            id="btn-call-agent"
+            className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-vb-card hover:bg-vb-card-hover border border-vb-border text-white text-sm font-medium transition-all active:scale-[0.98] group"
+          >
+            <Phone className="w-4 h-4 text-vb-gold-light group-hover:scale-110 transition-transform" />
+            <span>Call Agent</span>
+          </a>
+
+          <button
+            type="button"
+            onClick={handleEmailClick}
+            id="btn-email-agent"
+            className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-vb-card hover:bg-vb-card-hover border border-vb-border text-white text-sm font-medium transition-all active:scale-[0.98] group"
+          >
+            <Mail className="w-4 h-4 text-vb-gold-light group-hover:scale-110 transition-transform" />
+            <span>Send Email</span>
+          </button>
         </div>
-        <span className="tracking-wide">Chat on WhatsApp</span>
-      </button>
-
-      {/* 2. SECONDARY ACTION BUTTONS: Call & Email */}
-      <div className="grid grid-cols-2 gap-2.5">
-        <a
-          href={`tel:${agent.phone}`}
-          onClick={handleCallClick}
-          id="btn-call-agent"
-          className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-vb-card hover:bg-vb-card-hover border border-vb-border text-white text-sm font-medium transition-all active:scale-[0.98] group"
-        >
-          <Phone className="w-4 h-4 text-vb-gold-light group-hover:scale-110 transition-transform" />
-          <span>Call Agent</span>
-        </a>
-
-        <a
-          href={`mailto:${agent.email}?subject=${encodeURIComponent(
-            `Property Inquiry via Vidabricks - Attention: ${agent.firstName} ${agent.lastName}`
-          )}`}
-          onClick={handleEmailClick}
-          id="btn-email-agent"
-          className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-vb-card hover:bg-vb-card-hover border border-vb-border text-white text-sm font-medium transition-all active:scale-[0.98] group"
-        >
-          <Mail className="w-4 h-4 text-vb-gold-light group-hover:scale-110 transition-transform" />
-          <span>Send Email</span>
-        </a>
-      </div>
 
       {/* 3. TERTIARY ACTIONS: Save to Contacts & Share */}
       <div className="grid grid-cols-2 gap-2.5">
@@ -147,5 +151,6 @@ export const ContactActionGrid: React.FC<ContactActionGridProps> = ({
         </button>
       </div>
     </div>
+    </>
   );
 };
