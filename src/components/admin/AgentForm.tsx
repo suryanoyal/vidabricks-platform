@@ -793,24 +793,70 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
                 <label className="block text-xs font-bold uppercase tracking-wider text-vb-gold-champagne">
                   Languages Spoken
                 </label>
-                <div className="flex flex-wrap gap-2">
-                  {PREDEFINED_LANGUAGES.map((lang) => {
-                    const isSelected = formData.languages?.includes(lang);
-                    return (
-                      <button
+
+                {/* Selected Languages Chips */}
+                {formData.languages && formData.languages.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-1">
+                    {formData.languages.map((lang) => (
+                      <span
                         key={lang}
-                        type="button"
-                        onClick={() => toggleLanguage(lang)}
-                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                          isSelected
-                            ? 'bg-vb-gold-champagne text-vb-black font-bold'
-                            : 'bg-vb-dark border border-vb-border text-slate-300 hover:text-white'
-                        }`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-vb-gold text-vb-black text-xs font-bold shadow-sm"
                       >
-                        {lang} {isSelected && '✓'}
-                      </button>
-                    );
-                  })}
+                        <span>{lang}</span>
+                        <button
+                          type="button"
+                          onClick={() => toggleLanguage(lang)}
+                          className="text-vb-black/70 hover:text-black hover:scale-110 transition-transform"
+                          title={`Remove ${lang}`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Quick Select Common Languages */}
+                <div className="space-y-1.5 pt-1">
+                  <p className="text-[11px] text-slate-400 font-medium">Quick Select Common Languages:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PREDEFINED_LANGUAGES.map((lang) => {
+                      const isSelected = formData.languages?.includes(lang);
+                      return (
+                        <button
+                          key={lang}
+                          type="button"
+                          onClick={() => toggleLanguage(lang)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                            isSelected
+                              ? 'bg-vb-gold-champagne/20 border border-vb-gold text-vb-gold-light font-bold'
+                              : 'bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-300 hover:text-white'
+                          }`}
+                        >
+                          {isSelected ? `✓ ${lang}` : `+ ${lang}`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Add Extra Custom Language Input */}
+                <div className="flex items-center gap-2 pt-2">
+                  <input
+                    type="text"
+                    placeholder="Add extra language (e.g. Farsi, Turkish, Portuguese, Tagalog, Malayalam)..."
+                    value={customLang}
+                    onChange={(e) => setCustomLang(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomLang())}
+                    className="flex-1 px-3 py-2 rounded-xl bg-vb-dark border border-vb-border text-white text-xs outline-none focus:border-vb-gold placeholder:text-slate-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={addCustomLang}
+                    className="px-4 py-2 rounded-xl bg-vb-navy hover:bg-vb-border border border-vb-border text-white text-xs font-semibold shrink-0 transition-all hover:border-vb-gold/50"
+                  >
+                    + Add Language
+                  </button>
                 </div>
               </div>
 
