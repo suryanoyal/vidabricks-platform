@@ -140,12 +140,30 @@ export const supabaseApi = {
     if (!supabase) return false;
     try {
       const dbAgent = mapAgentToDbAgent(agent);
-      const { error } = await supabase
-        .from('agents')
-        .upsert(dbAgent, { onConflict: 'id' });
 
-      if (error) {
-        console.error('Supabase saveAgent error:', error);
+      // Check if existing agent exists by ID or Slug
+      const { data: existing } = await supabase
+        .from('agents')
+        .select('id')
+        .or(`id.eq.${dbAgent.id},slug.eq.${dbAgent.slug}`)
+        .maybeSingle();
+
+      let writeError;
+      if (existing) {
+        const { error } = await supabase
+          .from('agents')
+          .update(dbAgent)
+          .eq('id', existing.id);
+        writeError = error;
+      } else {
+        const { error } = await supabase
+          .from('agents')
+          .insert(dbAgent);
+        writeError = error;
+      }
+
+      if (writeError) {
+        console.error('Supabase saveAgent error:', writeError);
         return false;
       }
       return true;
