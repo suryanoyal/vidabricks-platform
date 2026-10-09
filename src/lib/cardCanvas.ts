@@ -346,6 +346,293 @@ export async function renderCardSheetCanvas(
 }
 
 /**
+ * Render Property Brochure / Signboard Flyer on Canvas
+ */
+export async function renderFlyerCanvas(
+  agent: Agent,
+  qrDataUrl: string,
+  qrType: 'vcard' | 'profile'
+): Promise<HTMLCanvasElement> {
+  const width = 1200;
+  const height = 700;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas context unavailable');
+
+  const radius = 28;
+  roundRect(ctx, 0, 0, width, height, radius);
+  ctx.clip();
+
+  // Background
+  const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+  bgGrad.addColorStop(0, '#0f1624');
+  bgGrad.addColorStop(1, '#05070d');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, width, height);
+
+  // Border
+  ctx.strokeStyle = 'rgba(201, 168, 76, 0.5)';
+  ctx.lineWidth = 3;
+  roundRect(ctx, 1.5, 1.5, width - 3, height - 3, radius);
+  ctx.stroke();
+
+  // Header Logo & Branding
+  try {
+    const logoImg = await loadImage('/logos/vidabricks-gold.png');
+    const logoHeight = 44;
+    const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
+    ctx.drawImage(logoImg, 50, 40, logoWidth, logoHeight);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
+    ctx.fillText('VIDABRICKS REAL ESTATE', 50 + logoWidth + 14, 62);
+    ctx.fillStyle = '#dfc77b';
+    ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
+    ctx.fillText('DUBAI LUXURY BROKERAGE', 50 + logoWidth + 14, 80);
+  } catch (e) {
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
+    ctx.fillText('VIDABRICKS REAL ESTATE', 50, 65);
+  }
+
+  // Header Right: RERA ORN
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
+  ctx.fillText('RERA ORN: 28472', width - 200, 60);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '13px system-ui, -apple-system, sans-serif';
+  ctx.fillText('Barsha Heights, Dubai', width - 200, 80);
+
+  // Divider
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(50, 110);
+  ctx.lineTo(width - 50, 110);
+  ctx.stroke();
+
+  // Left Content
+  const pillText = 'OFFICIAL PROPERTY CONSULTANT';
+  ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
+  const pillW = ctx.measureText(pillText).width;
+  ctx.fillStyle = 'rgba(201, 168, 76, 0.18)';
+  roundRect(ctx, 50, 140, pillW + 24, 28, 14);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(201, 168, 76, 0.5)';
+  roundRect(ctx, 50, 140, pillW + 24, 28, 14);
+  ctx.stroke();
+  ctx.fillStyle = '#dfc77b';
+  ctx.fillText(pillText, 62, 159);
+
+  // Agent Name
+  const fullName = `${agent.firstName} ${agent.lastName}`;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 44px system-ui, -apple-system, sans-serif';
+  ctx.fillText(fullName, 50, 225);
+
+  ctx.fillStyle = '#dfc77b';
+  ctx.font = '600 22px system-ui, -apple-system, sans-serif';
+  ctx.fillText(agent.jobTitle || 'Property Consultant', 50, 265);
+
+  // Bio quote
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = 'italic 16px system-ui, -apple-system, sans-serif';
+  const bio = agent.bio ? `"${agent.bio.slice(0, 140)}..."` : 'Dubai Prime Real Estate Portfolio Advisor';
+  ctx.fillText(bio, 50, 315);
+
+  // Right Side: QR Container
+  const qrBoxSize = 300;
+  const qrBoxX = width - qrBoxSize - 70;
+  const qrBoxY = 170;
+
+  ctx.fillStyle = '#ffffff';
+  roundRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 20);
+  ctx.fill();
+  ctx.strokeStyle = '#c9a84c';
+  ctx.lineWidth = 3;
+  roundRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 20);
+  ctx.stroke();
+
+  if (qrDataUrl) {
+    try {
+      const qrImg = await loadImage(qrDataUrl);
+      const drawSize = qrBoxSize - 55;
+      ctx.drawImage(qrImg, qrBoxX + 27, qrBoxY + 15, drawSize, drawSize);
+    } catch (e) {}
+  }
+
+  // QR Labels (requested by user)
+  const qrLabel = qrType === 'vcard' ? 'Save my contact on vcard qr' : 'View my profile on profile qr';
+  const qrSubLabel = qrType === 'vcard' ? 'Save my contact' : 'View my profile';
+
+  ctx.fillStyle = '#0a0e1a';
+  ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
+  const subW = ctx.measureText(qrSubLabel.toUpperCase()).width;
+  ctx.fillText(qrSubLabel.toUpperCase(), qrBoxX + (qrBoxSize - subW) / 2, qrBoxY + qrBoxSize - 15);
+
+  // Badge under QR container
+  ctx.fillStyle = 'rgba(201, 168, 76, 0.2)';
+  roundRect(ctx, qrBoxX, qrBoxY + qrBoxSize + 20, qrBoxSize, 36, 10);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(201, 168, 76, 0.5)';
+  ctx.lineWidth = 1;
+  roundRect(ctx, qrBoxX, qrBoxY + qrBoxSize + 20, qrBoxSize, 36, 10);
+  ctx.stroke();
+
+  ctx.fillStyle = '#dfc77b';
+  ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
+  const labelW = ctx.measureText(qrLabel.toUpperCase()).width;
+  ctx.fillText(qrLabel.toUpperCase(), qrBoxX + (qrBoxSize - labelW) / 2, qrBoxY + qrBoxSize + 43);
+
+  // Footer contacts on bottom left
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '16px system-ui, -apple-system, sans-serif';
+  ctx.fillText(`Phone: ${agent.phone}   |   Email: ${agent.email}   |   vidabricks.com`, 50, height - 50);
+
+  return canvas;
+}
+
+/**
+ * Render Social / WhatsApp Story Format on Canvas (1080 x 1920)
+ */
+export async function renderStoryCanvas(
+  agent: Agent,
+  qrDataUrl: string,
+  qrType: 'vcard' | 'profile'
+): Promise<HTMLCanvasElement> {
+  const width = 1080;
+  const height = 1920;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas context unavailable');
+
+  // Background
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+  bgGrad.addColorStop(0, '#0d1322');
+  bgGrad.addColorStop(0.5, '#080c16');
+  bgGrad.addColorStop(1, '#030509');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, width, height);
+
+  // Top gold trim bar
+  const topGrad = ctx.createLinearGradient(0, 0, width, 0);
+  topGrad.addColorStop(0, '#c9a84c');
+  topGrad.addColorStop(0.5, '#dfc77b');
+  topGrad.addColorStop(1, '#96782c');
+  ctx.fillStyle = topGrad;
+  ctx.fillRect(0, 0, width, 14);
+
+  // Logo top center
+  try {
+    const logoImg = await loadImage('/logos/vidabricks-gold.png');
+    const logoHeight = 90;
+    const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
+    ctx.drawImage(logoImg, (width - logoWidth) / 2, 140, logoWidth, logoHeight);
+  } catch (e) {}
+
+  ctx.fillStyle = '#dfc77b';
+  ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
+  const brandSub = 'VIDABRICKS LUXURY REAL ESTATE';
+  const brandSubW = ctx.measureText(brandSub).width;
+  ctx.fillText(brandSub, (width - brandSubW) / 2, 270);
+
+  // Agent photo (circle)
+  if (agent.photo && agent.photo.startsWith('http')) {
+    try {
+      const photoImg = await loadImage(agent.photo);
+      const photoRadius = 130;
+      const photoCenterX = width / 2;
+      const photoCenterY = 470;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(photoCenterX, photoCenterY, photoRadius, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(photoImg, photoCenterX - photoRadius, photoCenterY - photoRadius, photoRadius * 2, photoRadius * 2);
+      ctx.restore();
+
+      // Gold ring
+      ctx.beginPath();
+      ctx.arc(photoCenterX, photoCenterY, photoRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = '#c9a84c';
+      ctx.lineWidth = 6;
+      ctx.stroke();
+    } catch (e) {}
+  }
+
+  // Agent Name
+  const fullName = `${agent.firstName} ${agent.lastName}`;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 54px system-ui, -apple-system, sans-serif';
+  const nameW = ctx.measureText(fullName).width;
+  ctx.fillText(fullName, (width - nameW) / 2, 680);
+
+  // Job Title
+  ctx.fillStyle = '#dfc77b';
+  ctx.font = '600 28px system-ui, -apple-system, sans-serif';
+  const titleW = ctx.measureText(agent.jobTitle || '').width;
+  ctx.fillText(agent.jobTitle || '', (width - titleW) / 2, 730);
+
+  // Label requested by user
+  const qrLabel = qrType === 'vcard' ? 'Save my contact on vcard qr' : 'View my profile on profile qr';
+  const qrSubLabel = qrType === 'vcard' ? 'Save my contact' : 'View my profile';
+
+  // Label pill
+  ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
+  const labelW = ctx.measureText(qrLabel.toUpperCase()).width;
+  ctx.fillStyle = 'rgba(201, 168, 76, 0.2)';
+  roundRect(ctx, (width - (labelW + 48)) / 2, 800, labelW + 48, 54, 27);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(201, 168, 76, 0.6)';
+  ctx.lineWidth = 2;
+  roundRect(ctx, (width - (labelW + 48)) / 2, 800, labelW + 48, 54, 27);
+  ctx.stroke();
+  ctx.fillStyle = '#dfc77b';
+  ctx.fillText(qrLabel.toUpperCase(), (width - labelW) / 2, 836);
+
+  // QR Frame Center
+  const qrSize = 520;
+  const qrX = (width - qrSize) / 2;
+  const qrY = 900;
+
+  ctx.fillStyle = '#ffffff';
+  roundRect(ctx, qrX, qrY, qrSize, qrSize, 36);
+  ctx.fill();
+  ctx.strokeStyle = '#c9a84c';
+  ctx.lineWidth = 5;
+  roundRect(ctx, qrX, qrY, qrSize, qrSize, 36);
+  ctx.stroke();
+
+  if (qrDataUrl) {
+    try {
+      const qrImg = await loadImage(qrDataUrl);
+      const drawSize = qrSize - 80;
+      ctx.drawImage(qrImg, qrX + 40, qrY + 25, drawSize, drawSize);
+    } catch (e) {}
+  }
+
+  // Sublabel inside QR
+  ctx.fillStyle = '#0a0e1a';
+  ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
+  const subW = ctx.measureText(qrSubLabel.toUpperCase()).width;
+  ctx.fillText(qrSubLabel.toUpperCase(), (width - subW) / 2, qrY + qrSize - 25);
+
+  // Footer
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '22px monospace';
+  const urlText = `agents.vidabricks.com/agents/${agent.slug}`;
+  const urlW = ctx.measureText(urlText).width;
+  ctx.fillText(urlText, (width - urlW) / 2, 1750);
+
+  return canvas;
+}
+
+/**
  * Helper to download a canvas as PNG
  */
 export function downloadCanvasAsPng(canvas: HTMLCanvasElement, filename: string): void {
