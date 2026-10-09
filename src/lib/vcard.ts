@@ -1,7 +1,6 @@
 import { Agent, BrokerageSettings } from './types';
 
 export function generateVCardString(agent: Agent, settings?: BrokerageSettings): string {
-  const orgName = 'VidaBricks Real Estate LLC';
   const firstName = agent.firstName?.trim() || '';
   const lastName = agent.lastName?.trim() || '';
   const fullNameWithSuffix = [firstName, lastName, 'VidaBricks'].filter(Boolean).join(' ');
@@ -11,14 +10,8 @@ export function generateVCardString(agent: Agent, settings?: BrokerageSettings):
     'VERSION:3.0',
     `N:${lastName};${firstName};;;VidaBricks`,
     `FN:${fullNameWithSuffix}`,
-    `ORG:${orgName}`,
-    `TITLE:${agent.jobTitle}`,
     `TEL;TYPE=CELL,VOICE,pref:${agent.phone}`,
-    agent.whatsapp && agent.whatsapp !== agent.phone
-      ? `TEL;TYPE=WHATSAPP,VOICE:${agent.whatsapp}`
-      : '',
-    `EMAIL;TYPE=WORK,INTERNET:${agent.email}`,
-    `ADR;TYPE=WORK:;;Tameem House, Barsha Heights;Dubai;;;United Arab Emirates`,
+    `EMAIL;TYPE=INTERNET:${agent.email}`,
     agent.photo && agent.photo.startsWith('http') ? `PHOTO;VALUE=URI:${agent.photo}` : '',
     agent.updatedAt || agent.createdAt ? `REV:${agent.updatedAt || agent.createdAt}` : '',
     'END:VCARD',
