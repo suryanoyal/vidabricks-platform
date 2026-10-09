@@ -12,6 +12,9 @@ import {
   renderFlyerCanvas,
   renderStoryCanvas,
   downloadCanvasAsPng,
+  downloadBusinessCardPdf,
+  downloadBusinessCardSheetPdf,
+  downloadFlyerPdf,
 } from '@/lib/cardCanvas';
 
 interface MarketingCollateralProps {
@@ -67,7 +70,29 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
     qrType === 'vcard' ? 'Save my contact on vcard qr' : 'View my profile on profile qr';
   const activeQrSubLabel = qrType === 'vcard' ? 'Save my contact' : 'View my profile';
 
-  // Handlers for Business Card
+  // Handlers for Business Card (PDF & PNG)
+  const handleDownloadPdf = async () => {
+    try {
+      setDownloading('pdf');
+      await downloadBusinessCardPdf(agent, profileQr, vcardQr);
+    } catch (e) {
+      console.error('Failed to generate PDF:', e);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const handleDownloadSheetPdf = async () => {
+    try {
+      setDownloading('sheet-pdf');
+      await downloadBusinessCardSheetPdf(agent, profileQr, vcardQr);
+    } catch (e) {
+      console.error('Failed to generate A4 sheet PDF:', e);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   const handleDownloadSheet = async () => {
     try {
       setDownloading('sheet');
@@ -104,7 +129,18 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
     }
   };
 
-  // Handler for Flyer / Brochure
+  // Handler for Flyer / Brochure (PDF & PNG)
+  const handleDownloadFlyerPdf = async () => {
+    try {
+      setDownloading('flyer-pdf');
+      await downloadFlyerPdf(agent, qrDataUrl || vcardQr, qrType);
+    } catch (e) {
+      console.error('Failed to generate flyer PDF:', e);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   const handleDownloadFlyer = async () => {
     try {
       setDownloading('flyer');
@@ -179,55 +215,97 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
           {activeTab === 'business-card' && (
             <>
               <button
-                onClick={handleDownloadSheet}
+                onClick={handleDownloadPdf}
                 disabled={downloading !== null}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-vb-gold hover:bg-vb-gold-light text-vb-black text-xs font-bold transition-all shadow-gold-subtle disabled:opacity-50"
-                title="Download Front (Profile QR) & Back (Contact QR) Cards (PNG)"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-vb-gold to-vb-gold-light hover:brightness-110 text-vb-black text-xs font-bold transition-all shadow-gold-subtle disabled:opacity-50"
+                title="Download Print-Ready 3.5″ × 2″ Double-Sided Business Card PDF"
               >
-                {downloading === 'sheet' ? (
+                {downloading === 'pdf' ? (
                   <div className="w-3.5 h-3.5 border-2 border-vb-black border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <Download className="w-3.5 h-3.5" />
+                  <FileText className="w-3.5 h-3.5" />
                 )}
-                <span>Download Card (Front & Back)</span>
+                <span>Download PDF (Print-Ready)</span>
+              </button>
+
+              <button
+                onClick={handleDownloadSheetPdf}
+                disabled={downloading !== null}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-vb-card hover:bg-vb-card-hover border border-vb-gold/50 text-vb-gold-champagne text-xs font-semibold transition-all disabled:opacity-50"
+                title="Download A4 Presentation & Cutting Sheet (PDF)"
+              >
+                {downloading === 'sheet-pdf' ? (
+                  <div className="w-3.5 h-3.5 border-2 border-vb-gold border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Download className="w-3 h-3 text-vb-gold-light" />
+                )}
+                <span>A4 Sheet (PDF)</span>
+              </button>
+
+              <button
+                onClick={handleDownloadSheet}
+                disabled={downloading !== null}
+                className="flex items-center gap-1 px-3 py-2 rounded-xl bg-vb-navy hover:bg-vb-border border border-vb-border text-slate-200 text-xs font-semibold transition-all disabled:opacity-50"
+                title="Download Front & Back Cards (PNG)"
+              >
+                {downloading === 'sheet' ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Download className="w-3 h-3 text-vb-gold-light" />
+                )}
+                <span>PNG (Both)</span>
               </button>
 
               <button
                 onClick={handleDownloadFront}
                 disabled={downloading !== null}
-                className="flex items-center gap-1 px-3 py-2 rounded-xl bg-vb-navy hover:bg-vb-border border border-vb-border text-slate-200 text-xs font-semibold transition-all disabled:opacity-50"
-                title="Download Front Card (Profile QR)"
+                className="flex items-center gap-1 px-2.5 py-2 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-300 text-xs font-semibold transition-all disabled:opacity-50"
+                title="Download Front Card (Profile QR) Only"
               >
-                <Download className="w-3 h-3 text-vb-gold-light" />
-                <span>Front (Profile QR)</span>
+                <span>Front</span>
               </button>
 
               <button
                 onClick={handleDownloadBack}
                 disabled={downloading !== null}
-                className="flex items-center gap-1 px-3 py-2 rounded-xl bg-vb-navy hover:bg-vb-border border border-vb-border text-slate-200 text-xs font-semibold transition-all disabled:opacity-50"
-                title="Download Back Card (Contact QR)"
+                className="flex items-center gap-1 px-2.5 py-2 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-300 text-xs font-semibold transition-all disabled:opacity-50"
+                title="Download Back Card (Contact QR) Only"
               >
-                <Download className="w-3 h-3 text-vb-gold-light" />
-                <span>Back (Contact QR)</span>
+                <span>Back</span>
               </button>
             </>
           )}
 
           {activeTab === 'flyer' && (
-            <button
-              onClick={handleDownloadFlyer}
-              disabled={downloading !== null}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-vb-gold hover:bg-vb-gold-light text-vb-black text-xs font-bold transition-all shadow-gold-subtle disabled:opacity-50"
-              title="Download High-Res Brochure (PNG)"
-            >
-              {downloading === 'flyer' ? (
-                <div className="w-3.5 h-3.5 border-2 border-vb-black border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Download className="w-3.5 h-3.5" />
-              )}
-              <span>Download Brochure (PNG)</span>
-            </button>
+            <>
+              <button
+                onClick={handleDownloadFlyerPdf}
+                disabled={downloading !== null}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-vb-gold to-vb-gold-light hover:brightness-110 text-vb-black text-xs font-bold transition-all shadow-gold-subtle disabled:opacity-50"
+                title="Download High-Resolution Print-Ready Brochure (PDF)"
+              >
+                {downloading === 'flyer-pdf' ? (
+                  <div className="w-3.5 h-3.5 border-2 border-vb-black border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <FileText className="w-3.5 h-3.5" />
+                )}
+                <span>Download PDF (Print-Ready)</span>
+              </button>
+
+              <button
+                onClick={handleDownloadFlyer}
+                disabled={downloading !== null}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-vb-navy hover:bg-vb-border border border-vb-border text-slate-200 text-xs font-semibold transition-all disabled:opacity-50"
+                title="Download Brochure (PNG)"
+              >
+                {downloading === 'flyer' ? (
+                  <div className="w-3.5 h-3.5 border-2 border-vb-black border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5 text-vb-gold-light" />
+                )}
+                <span>Brochure (PNG)</span>
+              </button>
+            </>
           )}
 
           {activeTab === 'story' && (

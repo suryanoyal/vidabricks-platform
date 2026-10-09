@@ -1,4 +1,5 @@
 import QRCode from 'qrcode';
+import { jsPDF } from 'jspdf';
 import { Agent } from './types';
 import { generateVCardString } from './vcard';
 
@@ -831,4 +832,119 @@ export async function downloadCanvasAsPng(canvas: HTMLCanvasElement, filename: s
       resolve();
     }
   });
+}
+
+/**
+ * Export ultra-crisp print-ready 3.5" x 2" Double-Sided Business Card PDF (Front & Back)
+ */
+export async function downloadBusinessCardPdf(
+  agent: Agent,
+  profileQrDataUrl?: string,
+  vcardQrDataUrl?: string
+): Promise<void> {
+  const frontCanvas = await renderCardFrontCanvas(agent, profileQrDataUrl);
+  const backCanvas = await renderCardBackCanvas(agent, vcardQrDataUrl);
+
+  const cardWidthMm = 88.9; // 3.5 in
+  const cardHeightMm = 50.8; // 2.0 in
+
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: [cardWidthMm, cardHeightMm],
+    compress: true,
+  });
+
+  // Page 1: Front of Card (Profile QR)
+  const frontImg = frontCanvas.toDataURL('image/png', 1.0);
+  doc.addImage(frontImg, 'PNG', 0, 0, cardWidthMm, cardHeightMm, undefined, 'FAST');
+
+  // Page 2: Back of Card (Contact QR)
+  doc.addPage([cardWidthMm, cardHeightMm], 'landscape');
+  const backImg = backCanvas.toDataURL('image/png', 1.0);
+  doc.addImage(backImg, 'PNG', 0, 0, cardWidthMm, cardHeightMm, undefined, 'FAST');
+
+  doc.save(`${agent.slug}-vidabricks-card-print-ready.pdf`);
+}
+
+/**
+ * Export A4 Sheet with Front & Back business cards ready for print & cut
+ */
+export async function downloadBusinessCardSheetPdf(
+  agent: Agent,
+  profileQrDataUrl?: string,
+  vcardQrDataUrl?: string
+): Promise<void> {
+  const frontCanvas = await renderCardFrontCanvas(agent, profileQrDataUrl);
+  const backCanvas = await renderCardBackCanvas(agent, vcardQrDataUrl);
+
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+    compress: true,
+  });
+
+  const cardW = 88.9;
+  const cardH = 50.8;
+  const startX = (210 - cardW) / 2; // centered horizontally on A4 (210mm)
+
+  // Header branding
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.setTextColor(201, 168, 76);
+  doc.text('VIDABRICKS REAL ESTATE LLC', 105, 22, { align: 'center' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(148, 163, 184);
+  doc.text(`Official Luxury Business Card — ${agent.firstName} ${agent.lastName}`, 105, 29, { align: 'center' });
+
+  // Front Card
+  const frontImg = frontCanvas.toDataURL('image/png', 1.0);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(201, 168, 76);
+  doc.text('FRONT SIDE (PROFILE QR CODE):', startX, 44);
+  doc.addImage(frontImg, 'PNG', startX, 48, cardW, cardH, undefined, 'FAST');
+
+  // Back Card
+  const backImg = backCanvas.toDataURL('image/png', 1.0);
+  doc.text('BACK SIDE (VCARD CONTACT QR CODE):', startX, 114);
+  doc.addImage(backImg, 'PNG', startX, 118, cardW, cardH, undefined, 'FAST');
+
+  // Trim guides & instructions
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Standard 3.5" × 2" (88.9 × 50.8 mm) • 300+ DPI Print Fidelity • Ready for print and cut', 105, 180, { align: 'center' });
+
+  doc.save(`${agent.slug}-vidabricks-card-a4-sheet.pdf`);
+}
+
+/**
+ * Export Property Brochure / Signboard as Print-Ready A4 PDF
+ */
+export async function downloadFlyerPdf(
+  agent: Agent,
+  qrDataUrl: string,
+  qrType: 'vcard' | 'profile'
+): Promise<void> {
+  const flyerCanvas = await renderFlyerCanvas(agent, qrDataUrl, qrType);
+  const flyerImg = flyerCanvas.toDataURL('image/png', 1.0);
+
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4',
+    compress: true,
+  });
+
+  const printW = 277;
+  const printH = (277 / 1200) * 700;
+  const startX = 10;
+  const startY = (210 - printH) / 2;
+
+  doc.addImage(flyerImg, 'PNG', startX, startY, printW, printH, undefined, 'FAST');
+  doc.save(`${agent.slug}-vidabricks-brochure-print.pdf`);
 }
