@@ -174,25 +174,6 @@ export async function renderCardFrontCanvas(
     ctx.fillText('LUXURY REAL ESTATE', 50, 84);
   }
 
-  // Top Right RERA ORN Pill
-  const ornText = 'RERA ORN: 28472';
-  ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
-  const ornWidth = ctx.measureText(ornText).width;
-  const pillX = width - ornWidth - 75;
-  const pillY = 46;
-  const pillH = 30;
-
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-  roundRect(ctx, pillX, pillY, ornWidth + 24, pillH, 15);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(201, 168, 76, 0.5)';
-  ctx.lineWidth = 1.5;
-  roundRect(ctx, pillX, pillY, ornWidth + 24, pillH, 15);
-  ctx.stroke();
-
-  ctx.fillStyle = '#dfc77b';
-  ctx.fillText(ornText, pillX + 12, pillY + 20);
-
   // Agent Details (Left Side)
   const fullName = `${agent.firstName} ${agent.lastName}`;
   ctx.fillStyle = '#ffffff';

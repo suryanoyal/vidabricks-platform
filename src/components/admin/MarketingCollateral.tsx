@@ -555,12 +555,8 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
                       </span>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-1 text-[9px] text-vb-gold-champagne bg-vb-black/60 px-2 py-0.5 rounded-full border border-vb-gold/30">
-                    <ShieldCheck className="w-2.5 h-2.5 text-vb-gold-light" />
-                    <span>RERA ORN: 28472</span>
-                  </div>
                 </div>
+
 
                 {/* Middle Section: Agent Details (Left) + Profile QR (Right) */}
                 <div className="flex items-center justify-between gap-4">

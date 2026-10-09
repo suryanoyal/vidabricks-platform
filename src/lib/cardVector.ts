@@ -182,15 +182,6 @@ export async function generateCardFrontSvg(
     <text x="106" y="80" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="10" fill="#dfc77b" letter-spacing="2.5">LUXURY REAL ESTATE</text>
   </g>
 
-  <!-- Top Right RERA ORN Pill -->
-  <g id="vb-rera-orn">
-    <rect x="850" y="46" width="150" height="30" rx="15" fill="#000000" fill-opacity="0.6" stroke="#c9a84c" stroke-opacity="0.5" stroke-width="1.5" />
-    <!-- Shield Icon Vector -->
-    <path d="M865 55 c0 3 2 5.5 5 6.5 c3 -1 5 -3.5 5 -6.5 v-4.5 l-5 -2 l-5 2 z" fill="none" stroke="#dfc77b" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M868 55 l1.5 1.5 l3 -3" fill="none" stroke="#dfc77b" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-    <text x="884" y="66" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="12" fill="#dfc77b">RERA ORN: 28472</text>
-  </g>
-
   <!-- Left Side: Agent Personal Details -->
   <g id="vb-agent-details">
     <text x="50" y="215" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="38" fill="#ffffff">${escapeXml(fullName)}</text>
@@ -480,17 +471,6 @@ export async function renderCardFrontVectorPdf(
   doc.setFontSize(4.5);
   doc.setTextColor(223, 199, 123);
   doc.text('LUXURY REAL ESTATE', offsetX + 5, offsetY + 8.8);
-
-  // Top Right RERA ORN Pill (Vector)
-  doc.setFillColor(0, 0, 0);
-  doc.roundedRect(offsetX + 63, offsetY + 3.5, 21, 3.5, 1.75, 1.75, 'F');
-  doc.setDrawColor(201, 168, 76);
-  doc.setLineWidth(0.2);
-  doc.roundedRect(offsetX + 63, offsetY + 3.5, 21, 3.5, 1.75, 1.75, 'D');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(4.5);
-  doc.setTextColor(223, 199, 123);
-  doc.text('RERA ORN: 28472', offsetX + 73.5, offsetY + 5.9, { align: 'center' });
 
   // Agent Full Name (100% Vector Text)
   const fullName = `${agent.firstName} ${agent.lastName}`;
