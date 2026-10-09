@@ -17,6 +17,8 @@ import {
   downloadBusinessCardPdf,
   downloadBusinessCardSheetPdf,
   downloadFlyerPdf,
+  downloadCardSvg,
+  downloadBothCardSvgs,
 } from '@/lib/cardCanvas';
 
 interface MarketingCollateralProps {
@@ -90,6 +92,50 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
       await downloadBusinessCardSinglePdf(agent, 'back', vcardQr);
     } catch (e) {
       console.error('Failed to generate back PDF:', e);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const handleDownloadFrontSvg = async () => {
+    try {
+      setDownloading('front-svg');
+      await downloadCardSvg(agent, 'front');
+    } catch (e) {
+      console.error('Failed to generate front SVG:', e);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const handleDownloadBackSvg = async () => {
+    try {
+      setDownloading('back-svg');
+      await downloadCardSvg(agent, 'back');
+    } catch (e) {
+      console.error('Failed to generate back SVG:', e);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const handleDownloadBothSeparateSvgs = async () => {
+    try {
+      setDownloading('both-svg');
+      await downloadBothCardSvgs(agent);
+    } catch (e) {
+      console.error('Failed to generate both SVGs:', e);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const handleDownloadSheetSvg = async () => {
+    try {
+      setDownloading('sheet-svg');
+      await downloadCardSvg(agent, 'sheet');
+    } catch (e) {
+      console.error('Failed to generate sheet SVG:', e);
     } finally {
       setDownloading(null);
     }
@@ -249,26 +295,26 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
         <div className="flex items-center gap-2 flex-wrap">
           {activeTab === 'business-card' && (
             <>
-              {/* PRIMARY ACTION: Two Separate Print-Ready PDFs */}
+              {/* PRIMARY ACTION: Two Separate Print-Ready Vector PDFs */}
               <button
                 onClick={handleDownloadBothSeparatePdfs}
                 disabled={downloading !== null}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-vb-gold to-vb-gold-light hover:brightness-110 text-vb-black text-xs font-bold transition-all shadow-gold-subtle disabled:opacity-50"
-                title="Download 2 Separate Print-Ready PDFs: Front Card & Back Card"
+                title="Download 2 Separate 100% Vector Print-Ready PDFs (Front & Back with native vector text)"
               >
                 {downloading === 'both-pdf' ? (
                   <div className="w-3.5 h-3.5 border-2 border-vb-black border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <FileText className="w-3.5 h-3.5" />
                 )}
-                <span>Download Both (PDFs)</span>
+                <span>Download Both (Vector PDF)</span>
               </button>
 
               <button
                 onClick={handleDownloadFrontPdf}
                 disabled={downloading !== null}
                 className="flex items-center gap-1 px-3 py-2 rounded-xl bg-vb-card hover:bg-vb-card-hover border border-vb-gold/40 text-vb-gold-champagne text-xs font-semibold transition-all disabled:opacity-50"
-                title="Download Front Card Only (Exact 3.5″ × 2″ Print-Ready PDF)"
+                title="Download Front Card Only (Exact 3.5″ × 2″ 100% Vector PDF)"
               >
                 {downloading === 'front-pdf' ? (
                   <div className="w-3 h-3 border-2 border-vb-gold border-t-transparent rounded-full animate-spin" />
@@ -282,7 +328,7 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
                 onClick={handleDownloadBackPdf}
                 disabled={downloading !== null}
                 className="flex items-center gap-1 px-3 py-2 rounded-xl bg-vb-card hover:bg-vb-card-hover border border-vb-gold/40 text-vb-gold-champagne text-xs font-semibold transition-all disabled:opacity-50"
-                title="Download Back Card Only (Exact 3.5″ × 2″ Print-Ready PDF)"
+                title="Download Back Card Only (Exact 3.5″ × 2″ 100% Vector PDF)"
               >
                 {downloading === 'back-pdf' ? (
                   <div className="w-3 h-3 border-2 border-vb-gold border-t-transparent rounded-full animate-spin" />
@@ -294,39 +340,68 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
 
               <div className="h-5 w-px bg-vb-border mx-0.5" />
 
+              {/* VECTOR SVG ACTIONS */}
+              <button
+                onClick={handleDownloadBothSeparateSvgs}
+                disabled={downloading !== null}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-vb-card hover:bg-vb-navy border border-vb-gold/60 text-vb-gold-champagne text-xs font-bold transition-all disabled:opacity-50 shadow-sm"
+                title="Download Both Cards as 100% Scalable Vector SVG (Editable Text & Paths)"
+              >
+                {downloading === 'both-svg' ? (
+                  <div className="w-3 h-3 border-2 border-vb-gold border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5 text-vb-gold-light" />
+                )}
+                <span>Both (Vector SVG)</span>
+              </button>
+
+              <button
+                onClick={handleDownloadFrontSvg}
+                disabled={downloading !== null}
+                className="flex items-center gap-1 px-2.5 py-2 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-300 hover:text-white text-xs font-semibold transition-all disabled:opacity-50"
+                title="Download Front Card as Scalable Vector SVG (Native Text & QR)"
+              >
+                {downloading === 'front-svg' ? (
+                  <div className="w-3 h-3 border-2 border-vb-gold border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Download className="w-3 h-3 text-vb-gold-light" />
+                )}
+                <span>Front (SVG)</span>
+              </button>
+
+              <button
+                onClick={handleDownloadBackSvg}
+                disabled={downloading !== null}
+                className="flex items-center gap-1 px-2.5 py-2 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-300 hover:text-white text-xs font-semibold transition-all disabled:opacity-50"
+                title="Download Back Card as Scalable Vector SVG (Native Text & QR)"
+              >
+                {downloading === 'back-svg' ? (
+                  <div className="w-3 h-3 border-2 border-vb-gold border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Download className="w-3 h-3 text-vb-gold-light" />
+                )}
+                <span>Back (SVG)</span>
+              </button>
+
+              <div className="h-5 w-px bg-vb-border mx-0.5" />
+
+              {/* PNG RASTER ACTIONS */}
               <button
                 onClick={handleDownloadSheet}
                 disabled={downloading !== null}
-                className="flex items-center gap-1 px-2.5 py-2 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-300 text-xs font-semibold transition-all disabled:opacity-50"
-                title="Download Front & Back Cards (PNG)"
+                className="flex items-center gap-1 px-2.5 py-2 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-400 hover:text-slate-200 text-xs font-semibold transition-all disabled:opacity-50"
+                title="Download Front & Back Cards (PNG Raster Image)"
               >
                 {downloading === 'sheet' ? (
                   <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <Download className="w-3 h-3 text-vb-gold-light" />
+                  <Download className="w-3 h-3 text-slate-400" />
                 )}
-                <span>Both (PNG)</span>
-              </button>
-
-              <button
-                onClick={handleDownloadFront}
-                disabled={downloading !== null}
-                className="flex items-center gap-1 px-2 py-2 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-400 hover:text-slate-200 text-xs font-semibold transition-all disabled:opacity-50"
-                title="Download Front Card (Profile QR) Only (PNG)"
-              >
-                <span>Front PNG</span>
-              </button>
-
-              <button
-                onClick={handleDownloadBack}
-                disabled={downloading !== null}
-                className="flex items-center gap-1 px-2 py-2 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-400 hover:text-slate-200 text-xs font-semibold transition-all disabled:opacity-50"
-                title="Download Back Card (Contact QR) Only (PNG)"
-              >
-                <span>Back PNG</span>
+                <span>PNG</span>
               </button>
             </>
           )}
+
 
           {activeTab === 'flyer' && (
             <>
@@ -389,6 +464,46 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
       {/* 1. LUXURY DIGITAL BUSINESS CARD FORMAT */}
       {activeTab === 'business-card' && (
         <div id="printable-card-area" className="space-y-6">
+          {/* Vector Format Feature Banner */}
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-vb-gold/15 via-vb-card to-vb-dark border border-vb-gold/40 shadow-sm flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-vb-gold/20 border border-vb-gold/40 flex items-center justify-center text-vb-gold-light shrink-0">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-sm font-bold text-white">100% Vector Format Enabled</h4>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold uppercase tracking-wider">
+                    Native Vector + Selectable Text
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  All typography, geometry, badges, and QR codes are native vector paths. Infinitely scalable with zero pixelation for commercial print shops (3.5″ × 2″) and vector tools (Illustrator, Figma, Corel).
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleDownloadBothSeparatePdfs}
+                disabled={downloading !== null}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-vb-gold to-vb-gold-light hover:brightness-110 text-vb-black text-xs font-bold transition-all shadow-gold-subtle flex items-center gap-1.5 disabled:opacity-50"
+                title="Download Both Cards as 100% Vector Print-Ready PDFs"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Vector PDF</span>
+              </button>
+              <button
+                onClick={handleDownloadBothSeparateSvgs}
+                disabled={downloading !== null}
+                className="px-3 py-1.5 rounded-xl bg-vb-card hover:bg-vb-navy border border-vb-gold/50 text-vb-gold-champagne text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-50"
+                title="Download Both Cards as 100% Scalable Vector SVGs"
+              >
+                <Download className="w-3.5 h-3.5 text-vb-gold-light" />
+                <span>Vector SVG</span>
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* FRONT OF CARD (PROFILE QR CODE, NO NFC ENABLED) */}
             <div className="space-y-2">
@@ -397,15 +512,26 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
                   <CreditCard className="w-3.5 h-3.5 text-vb-gold-light" />
                   Front Side (Profile QR Code)
                 </span>
-                <button
-                  onClick={handleDownloadFrontPdf}
-                  disabled={downloading !== null}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-vb-gold/20 to-vb-gold/10 hover:from-vb-gold/30 hover:to-vb-gold/20 border border-vb-gold/50 text-vb-gold-champagne text-xs font-bold transition-all disabled:opacity-50 shadow-sm"
-                  title="Download Front Card Only (Exact 3.5″ × 2″ Print-Ready PDF)"
-                >
-                  <FileText className="w-3.5 h-3.5 text-vb-gold-light" />
-                  <span>Download Front (PDF)</span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={handleDownloadFrontPdf}
+                    disabled={downloading !== null}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-vb-gold/20 to-vb-gold/10 hover:from-vb-gold/30 hover:to-vb-gold/20 border border-vb-gold/50 text-vb-gold-champagne text-xs font-bold transition-all disabled:opacity-50 shadow-sm"
+                    title="Download Front Card Only (Exact 3.5″ × 2″ 100% Vector PDF)"
+                  >
+                    <FileText className="w-3 h-3 text-vb-gold-light" />
+                    <span>Vector PDF</span>
+                  </button>
+                  <button
+                    onClick={handleDownloadFrontSvg}
+                    disabled={downloading !== null}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-300 hover:text-white text-xs font-semibold transition-all disabled:opacity-50"
+                    title="Download Front Card Only as 100% Scalable Vector SVG (Fully Editable Text & Paths)"
+                  >
+                    <Download className="w-3 h-3 text-vb-gold-light" />
+                    <span>Vector SVG</span>
+                  </button>
+                </div>
               </div>
 
               <div className="relative aspect-[1.75/1] rounded-2xl p-6 bg-gradient-to-br from-[#121824] via-[#0b101c] to-[#05070d] border border-vb-gold/40 shadow-2xl flex flex-col justify-between overflow-hidden">
@@ -487,16 +613,28 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
                   <CreditCard className="w-3.5 h-3.5 text-vb-gold-light" />
                   Back Side (Contact vCard QR Code)
                 </span>
-                <button
-                  onClick={handleDownloadBackPdf}
-                  disabled={downloading !== null}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-vb-gold/20 to-vb-gold/10 hover:from-vb-gold/30 hover:to-vb-gold/20 border border-vb-gold/50 text-vb-gold-champagne text-xs font-bold transition-all disabled:opacity-50 shadow-sm"
-                  title="Download Back Card Only (Exact 3.5″ × 2″ Print-Ready PDF)"
-                >
-                  <FileText className="w-3.5 h-3.5 text-vb-gold-light" />
-                  <span>Download Back (PDF)</span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={handleDownloadBackPdf}
+                    disabled={downloading !== null}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-vb-gold/20 to-vb-gold/10 hover:from-vb-gold/30 hover:to-vb-gold/20 border border-vb-gold/50 text-vb-gold-champagne text-xs font-bold transition-all disabled:opacity-50 shadow-sm"
+                    title="Download Back Card Only (Exact 3.5″ × 2″ 100% Vector PDF)"
+                  >
+                    <FileText className="w-3 h-3 text-vb-gold-light" />
+                    <span>Vector PDF</span>
+                  </button>
+                  <button
+                    onClick={handleDownloadBackSvg}
+                    disabled={downloading !== null}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-300 hover:text-white text-xs font-semibold transition-all disabled:opacity-50"
+                    title="Download Back Card Only as 100% Scalable Vector SVG (Fully Editable Text & Paths)"
+                  >
+                    <Download className="w-3 h-3 text-vb-gold-light" />
+                    <span>Vector SVG</span>
+                  </button>
+                </div>
               </div>
+
 
               <div className="relative aspect-[1.75/1] rounded-2xl p-6 bg-gradient-to-br from-[#0c121e] to-[#04060b] border border-vb-gold/40 shadow-2xl flex items-center justify-between overflow-hidden">
                 <div className="space-y-2.5 max-w-[55%]">
