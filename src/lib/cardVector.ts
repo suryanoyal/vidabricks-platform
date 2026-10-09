@@ -51,24 +51,68 @@ export function getAgentProfileUrl(agent: Agent): string {
 }
 
 /**
+ * Resolves QR target text safely.
+ * If override is provided but is a base64 Data URL (e.g. data:image/png;base64,...),
+ * it must NOT be passed to QRCode generator (which would crash due to QR capacity limits).
+ */
+export function resolveQrTargetText(
+  agent: Agent,
+  type: 'profile' | 'vcard',
+  override?: string
+): string {
+  if (
+    override &&
+    typeof override === 'string' &&
+    !override.startsWith('data:') &&
+    !override.startsWith('blob:') &&
+    override.length < 2500
+  ) {
+    return override;
+  }
+  if (type === 'vcard') {
+    return generateVCardString(agent);
+  }
+  return getAgentProfileUrl(agent);
+}
+
+/**
  * Generate SVG paths for a given QR text with high error correction
  */
 async function generateQrSvgPaths(text: string): Promise<{ size: number; innerSvg: string }> {
-  const rawSvg = await QRCode.toString(text, {
-    type: 'svg',
-    errorCorrectionLevel: 'H',
-    margin: 2,
-    color: {
-      dark: '#111111',
-      light: '#ffffff',
-    },
-  });
+  try {
+    const rawSvg = await QRCode.toString(text, {
+      type: 'svg',
+      errorCorrectionLevel: 'H',
+      margin: 2,
+      color: {
+        dark: '#111111',
+        light: '#ffffff',
+      },
+    });
 
-  const viewBoxMatch = rawSvg.match(/viewBox="0 0 (\d+) \d+"/);
-  const size = viewBoxMatch ? parseInt(viewBoxMatch[1], 10) : 33;
-  const innerSvg = rawSvg.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '');
+    const viewBoxMatch = rawSvg.match(/viewBox="0 0 (\d+) \d+"/);
+    const size = viewBoxMatch ? parseInt(viewBoxMatch[1], 10) : 33;
+    const innerSvg = rawSvg.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '');
 
-  return { size, innerSvg };
+    return { size, innerSvg };
+  } catch (err) {
+    // Fallback to Medium error correction if text is long
+    const rawSvg = await QRCode.toString(text, {
+      type: 'svg',
+      errorCorrectionLevel: 'M',
+      margin: 2,
+      color: {
+        dark: '#111111',
+        light: '#ffffff',
+      },
+    });
+
+    const viewBoxMatch = rawSvg.match(/viewBox="0 0 (\d+) \d+"/);
+    const size = viewBoxMatch ? parseInt(viewBoxMatch[1], 10) : 33;
+    const innerSvg = rawSvg.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '');
+
+    return { size, innerSvg };
+  }
 }
 
 /**
@@ -79,7 +123,7 @@ export async function generateCardFrontSvg(
   agent: Agent,
   profileUrlOverride?: string
 ): Promise<string> {
-  const profileUrl = profileUrlOverride || getAgentProfileUrl(agent);
+  const profileUrl = resolveQrTargetText(agent, 'profile', profileUrlOverride);
   const { size: qrMatrixSize, innerSvg: qrSvgContent } = await generateQrSvgPaths(profileUrl);
   const logoUri = await getLogoDataUri();
 
@@ -188,10 +232,10 @@ export async function generateCardBackSvg(
   agent: Agent,
   vcardStringOverride?: string
 ): Promise<string> {
-  const vcardText = vcardStringOverride || generateVCardString(agent);
+  const vcardText = resolveQrTargetText(agent, 'vcard', vcardStringOverride);
   const { size: qrMatrixSize, innerSvg: qrSvgContent } = await generateQrSvgPaths(vcardText);
 
-  // QR scale inside white box (224x224 at position x=720, y=145)
+  // QR scale inside white box (224x224 at position x=748, y=161)
   const qrScale = (224 / qrMatrixSize).toFixed(4);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -368,16 +412,36 @@ function drawVectorQrOnPdf(
   startY: number,
   boxSizeMm: number
 ): void {
-  const qr = QRCode.create(qrText, { errorCorrectionLevel: 'H' });
-  const matrixSize = qr.modules.size;
-  const cellMm = boxSizeMm / matrixSize;
+  try {
+    const qr = QRCode.create(qrText, { errorCorrectionLevel: 'H' });
+    const matrixSize = qr.modules.size;
+    const cellMm = boxSizeMm / matrixSize;
 
-  doc.setFillColor(17, 17, 17);
-  for (let r = 0; r < matrixSize; r++) {
-    for (let c = 0; c < matrixSize; c++) {
-      if (qr.modules.get(r, c)) {
-        doc.rect(startX + c * cellMm, startY + r * cellMm, cellMm, cellMm, 'F');
+    doc.setFillColor(17, 17, 17);
+    for (let r = 0; r < matrixSize; r++) {
+      for (let c = 0; c < matrixSize; c++) {
+        if (qr.modules.get(r, c)) {
+          doc.rect(startX + c * cellMm, startY + r * cellMm, cellMm, cellMm, 'F');
+        }
       }
+    }
+  } catch (err) {
+    console.warn('Vector QR generation retry with Medium error correction:', err);
+    try {
+      const qr = QRCode.create(qrText, { errorCorrectionLevel: 'M' });
+      const matrixSize = qr.modules.size;
+      const cellMm = boxSizeMm / matrixSize;
+
+      doc.setFillColor(17, 17, 17);
+      for (let r = 0; r < matrixSize; r++) {
+        for (let c = 0; c < matrixSize; c++) {
+          if (qr.modules.get(r, c)) {
+            doc.rect(startX + c * cellMm, startY + r * cellMm, cellMm, cellMm, 'F');
+          }
+        }
+      }
+    } catch (err2) {
+      console.error('Vector QR generation failed:', err2);
     }
   }
 }
@@ -388,55 +452,57 @@ function drawVectorQrOnPdf(
 export async function renderCardFrontVectorPdf(
   doc: jsPDF,
   agent: Agent,
-  profileUrlOverride?: string
+  profileUrlOverride?: string,
+  offsetX: number = 0,
+  offsetY: number = 0
 ): Promise<void> {
-  const profileUrl = profileUrlOverride || getAgentProfileUrl(agent);
+  const profileUrl = resolveQrTargetText(agent, 'profile', profileUrlOverride);
 
   // Background Dark Fill
   doc.setFillColor(11, 16, 28);
-  doc.rect(0, 0, 88.9, 50.8, 'F');
+  doc.rect(offsetX + 0, offsetY + 0, 88.9, 50.8, 'F');
 
   // Outer Gold Border (Rounded)
   doc.setDrawColor(201, 168, 76);
   doc.setLineWidth(0.3);
-  doc.roundedRect(1, 1, 86.9, 48.8, 2, 2, 'D');
+  doc.roundedRect(offsetX + 1, offsetY + 1, 86.9, 48.8, 2, 2, 'D');
 
   // Bottom Gold Stripe
   doc.setFillColor(201, 168, 76);
-  doc.rect(0, 49.8, 88.9, 1.0, 'F');
+  doc.rect(offsetX + 0, offsetY + 49.8, 88.9, 1.0, 'F');
 
   // Top Left Company Branding (100% Vector Typography)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(255, 255, 255);
-  doc.text('VIDABRICKS', 5, 6.2);
+  doc.text('VIDABRICKS', offsetX + 5, offsetY + 6.2);
 
   doc.setFontSize(4.5);
   doc.setTextColor(223, 199, 123);
-  doc.text('LUXURY REAL ESTATE', 5, 8.8);
+  doc.text('LUXURY REAL ESTATE', offsetX + 5, offsetY + 8.8);
 
   // Top Right RERA ORN Pill (Vector)
   doc.setFillColor(0, 0, 0);
-  doc.roundedRect(63, 3.5, 21, 3.5, 1.75, 1.75, 'F');
+  doc.roundedRect(offsetX + 63, offsetY + 3.5, 21, 3.5, 1.75, 1.75, 'F');
   doc.setDrawColor(201, 168, 76);
   doc.setLineWidth(0.2);
-  doc.roundedRect(63, 3.5, 21, 3.5, 1.75, 1.75, 'D');
+  doc.roundedRect(offsetX + 63, offsetY + 3.5, 21, 3.5, 1.75, 1.75, 'D');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(4.5);
   doc.setTextColor(223, 199, 123);
-  doc.text('RERA ORN: 28472', 73.5, 5.9, { align: 'center' });
+  doc.text('RERA ORN: 28472', offsetX + 73.5, offsetY + 5.9, { align: 'center' });
 
   // Agent Full Name (100% Vector Text)
   const fullName = `${agent.firstName} ${agent.lastName}`;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
   doc.setTextColor(255, 255, 255);
-  doc.text(fullName, 5, 18.5);
+  doc.text(fullName, offsetX + 5, offsetY + 18.5);
 
   // Job Title (100% Vector Text)
   doc.setFontSize(7.5);
   doc.setTextColor(223, 199, 123);
-  doc.text(agent.jobTitle || 'Property Consultant', 5, 22.5);
+  doc.text(agent.jobTitle || 'Property Consultant', offsetX + 5, offsetY + 22.5);
 
   // RERA BRN or Dubai UAE (100% Vector Text)
   const hasRera = Boolean(agent.reraNumber && agent.reraNumber.trim() && agent.reraNumber !== 'N/A');
@@ -446,48 +512,48 @@ export async function renderCardFrontVectorPdf(
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(5.5);
   doc.setTextColor(148, 163, 184);
-  doc.text(brnText, 5, 26.0);
+  doc.text(brnText, offsetX + 5, offsetY + 26.0);
 
   // Profile Action Badge (Vector Box + Vector Text)
   doc.setFillColor(35, 33, 26);
-  doc.roundedRect(5, 28.5, 42, 3.5, 0.8, 0.8, 'F');
+  doc.roundedRect(offsetX + 5, offsetY + 28.5, 42, 3.5, 0.8, 0.8, 'F');
   doc.setDrawColor(201, 168, 76);
-  doc.roundedRect(5, 28.5, 42, 3.5, 0.8, 0.8, 'D');
+  doc.roundedRect(offsetX + 5, offsetY + 28.5, 42, 3.5, 0.8, 0.8, 'D');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(4.5);
   doc.setTextColor(223, 199, 123);
-  doc.text('VIEW MY PROFILE ON PROFILE QR', 6, 30.9);
+  doc.text('VIEW MY PROFILE ON PROFILE QR', offsetX + 6, offsetY + 30.9);
 
   // Right Side: White QR Code Container (Vector Box)
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(58.5, 12.5, 25.5, 25.5, 1.8, 1.8, 'F');
+  doc.roundedRect(offsetX + 58.5, offsetY + 12.5, 25.5, 25.5, 1.8, 1.8, 'F');
   doc.setDrawColor(201, 168, 76);
   doc.setLineWidth(0.3);
-  doc.roundedRect(58.5, 12.5, 25.5, 25.5, 1.8, 1.8, 'D');
+  doc.roundedRect(offsetX + 58.5, offsetY + 12.5, 25.5, 25.5, 1.8, 1.8, 'D');
 
   // Vector QR Code Modules
-  drawVectorQrOnPdf(doc, profileUrl, 61.0, 14.0, 20.5);
+  drawVectorQrOnPdf(doc, profileUrl, offsetX + 61.0, offsetY + 14.0, 20.5);
 
   // Label under QR Code (100% Vector Text)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(4.2);
   doc.setTextColor(10, 14, 26);
-  doc.text('VIEW MY PROFILE', 71.25, 36.3, { align: 'center' });
+  doc.text('VIEW MY PROFILE', offsetX + 71.25, offsetY + 36.3, { align: 'center' });
 
   // Footer Divider Line
   doc.setDrawColor(255, 255, 255);
   doc.setLineWidth(0.1);
-  doc.line(5, 43.5, 83.9, 43.5);
+  doc.line(offsetX + 5, offsetY + 43.5, offsetX + 83.9, offsetY + 43.5);
 
   // Footer Text (100% Vector Text)
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(5.2);
   doc.setTextColor(148, 163, 184);
-  doc.text('Tameem House, Barsha Heights, Dubai', 5, 47.0);
+  doc.text('Tameem House, Barsha Heights, Dubai', offsetX + 5, offsetY + 47.0);
 
   doc.setFont('courier', 'normal');
   doc.setFontSize(4.8);
-  doc.text(`agents.vidabricks.com/${agent.slug}`, 83.9, 47.0, { align: 'right' });
+  doc.text(`agents.vidabricks.com/${agent.slug}`, offsetX + 83.9, offsetY + 47.0, { align: 'right' });
 }
 
 /**
@@ -496,82 +562,84 @@ export async function renderCardFrontVectorPdf(
 export async function renderCardBackVectorPdf(
   doc: jsPDF,
   agent: Agent,
-  vcardStringOverride?: string
+  vcardStringOverride?: string,
+  offsetX: number = 0,
+  offsetY: number = 0
 ): Promise<void> {
-  const vcardText = vcardStringOverride || generateVCardString(agent);
+  const vcardText = resolveQrTargetText(agent, 'vcard', vcardStringOverride);
 
   // Background Dark Fill
   doc.setFillColor(10, 14, 24);
-  doc.rect(0, 0, 88.9, 50.8, 'F');
+  doc.rect(offsetX + 0, offsetY + 0, 88.9, 50.8, 'F');
 
   // Outer Gold Border (Rounded)
   doc.setDrawColor(201, 168, 76);
   doc.setLineWidth(0.3);
-  doc.roundedRect(1, 1, 86.9, 48.8, 2, 2, 'D');
+  doc.roundedRect(offsetX + 1, offsetY + 1, 86.9, 48.8, 2, 2, 'D');
 
   // Bottom Gold Stripe
   doc.setFillColor(201, 168, 76);
-  doc.rect(0, 49.8, 88.9, 1.0, 'F');
+  doc.rect(offsetX + 0, offsetY + 49.8, 88.9, 1.0, 'F');
 
   // Action Pill Badge Top Left
   doc.setFillColor(35, 33, 26);
-  doc.roundedRect(5, 4.5, 42, 3.5, 0.8, 0.8, 'F');
+  doc.roundedRect(offsetX + 5, offsetY + 4.5, 42, 3.5, 0.8, 0.8, 'F');
   doc.setDrawColor(201, 168, 76);
-  doc.roundedRect(5, 4.5, 42, 3.5, 0.8, 0.8, 'D');
+  doc.roundedRect(offsetX + 5, offsetY + 4.5, 42, 3.5, 0.8, 0.8, 'D');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(4.5);
   doc.setTextColor(223, 199, 123);
-  doc.text('SAVE MY CONTACT ON VCARD QR', 6, 6.9);
+  doc.text('SAVE MY CONTACT ON VCARD QR', offsetX + 6, offsetY + 6.9);
 
   // Connect Heading (100% Vector Text)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
   doc.setTextColor(255, 255, 255);
-  doc.text(`Connect Directly with ${agent.firstName}`, 5, 14.0);
+  doc.text(`Connect Directly with ${agent.firstName}`, offsetX + 5, offsetY + 14.0);
 
   // Contact list (100% Vector Text)
   doc.setFontSize(5.5);
   doc.setTextColor(223, 199, 123);
-  doc.text('PHONE:', 5, 19.5);
+  doc.text('PHONE:', offsetX + 5, offsetY + 19.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(241, 245, 249);
-  doc.text(agent.phone || '', 15, 19.5);
+  doc.text(agent.phone || '', offsetX + 15, offsetY + 19.5);
 
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(223, 199, 123);
-  doc.text('EMAIL:', 5, 24.5);
+  doc.text('EMAIL:', offsetX + 5, offsetY + 24.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(241, 245, 249);
-  doc.text(agent.email || '', 15, 24.5);
+  doc.text(agent.email || '', offsetX + 15, offsetY + 24.5);
 
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(223, 199, 123);
-  doc.text('WEB:', 5, 29.5);
+  doc.text('WEB:', offsetX + 5, offsetY + 29.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(241, 245, 249);
-  doc.text('vidabricks.com', 15, 29.5);
+  doc.text('vidabricks.com', offsetX + 15, offsetY + 29.5);
 
   // Footer note (100% Vector Text)
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(5.2);
   doc.setTextColor(148, 163, 184);
-  doc.text('Dubai Luxury Real Estate Brokerage', 5, 47.0);
+  doc.text('Dubai Luxury Real Estate Brokerage', offsetX + 5, offsetY + 47.0);
 
   // Right Side: White QR Code Container (Vector Box)
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(58.5, 12.5, 25.5, 25.5, 1.8, 1.8, 'F');
+  doc.roundedRect(offsetX + 58.5, offsetY + 12.5, 25.5, 25.5, 1.8, 1.8, 'F');
   doc.setDrawColor(201, 168, 76);
   doc.setLineWidth(0.3);
-  doc.roundedRect(58.5, 12.5, 25.5, 25.5, 1.8, 1.8, 'D');
+  doc.roundedRect(offsetX + 58.5, offsetY + 12.5, 25.5, 25.5, 1.8, 1.8, 'D');
 
   // Vector vCard QR Code Modules
-  drawVectorQrOnPdf(doc, vcardText, 61.0, 14.0, 20.5);
+  drawVectorQrOnPdf(doc, vcardText, offsetX + 61.0, offsetY + 14.0, 20.5);
 
   // Label under Contact QR (100% Vector Text)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(4.2);
   doc.setTextColor(10, 14, 26);
-  doc.text('SAVE MY CONTACT', 71.25, 36.3, { align: 'center' });
+  doc.text('SAVE MY CONTACT', offsetX + 71.25, offsetY + 36.3, { align: 'center' });
 }
 
 /**
@@ -681,15 +749,22 @@ export async function downloadBusinessCardSheetVectorPdf(
   doc.text('FRONT SIDE (PROFILE QR CODE):', startX, 44);
 
   // Render front card directly at startX, 48
-  // Temporarily offset
-  // We can render front card into a 1-page vector subdoc and import, or render directly
-  // In jsPDF, we can set coordinate offset by adjusting or we can draw directly
-  const frontDoc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [cardW, cardH] });
-  await renderCardFrontVectorPdf(frontDoc, agent, profileQrOverride);
+  await renderCardFrontVectorPdf(doc, agent, profileQrOverride, startX, 48);
 
-  // A4 sheet:
-  // We can render both pages as clean vector
-  await renderCardFrontVectorPdf(doc, agent, profileQrOverride);
+  // Back Card Label
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(201, 168, 76);
+  doc.text('BACK SIDE (VCARD CONTACT QR CODE):', startX, 114);
+
+  // Render back card directly at startX, 118
+  await renderCardBackVectorPdf(doc, agent, vcardQrOverride, startX, 118);
+
+  // Trim guides & instructions
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Standard 3.5" × 2" (88.9 × 50.8 mm) • 100% Vector PDF • Print & Cut Ready', 105, 180, { align: 'center' });
 
   doc.save(`${agent.slug}-vidabricks-card-a4-sheet.pdf`);
 }

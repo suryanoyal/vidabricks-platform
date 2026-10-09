@@ -78,7 +78,7 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
   const handleDownloadFrontPdf = async () => {
     try {
       setDownloading('front-pdf');
-      await downloadBusinessCardSinglePdf(agent, 'front', profileQr);
+      await downloadBusinessCardSinglePdf(agent, 'front');
     } catch (e) {
       console.error('Failed to generate front PDF:', e);
     } finally {
@@ -89,7 +89,7 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
   const handleDownloadBackPdf = async () => {
     try {
       setDownloading('back-pdf');
-      await downloadBusinessCardSinglePdf(agent, 'back', vcardQr);
+      await downloadBusinessCardSinglePdf(agent, 'back');
     } catch (e) {
       console.error('Failed to generate back PDF:', e);
     } finally {
@@ -144,7 +144,7 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
   const handleDownloadBothSeparatePdfs = async () => {
     try {
       setDownloading('both-pdf');
-      await downloadBusinessCardBothSeparatePdfs(agent, profileQr, vcardQr);
+      await downloadBusinessCardBothSeparatePdfs(agent);
     } catch (e) {
       console.error('Failed to generate both PDFs:', e);
     } finally {
@@ -155,7 +155,7 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
   const handleDownloadPdf = async () => {
     try {
       setDownloading('pdf');
-      await downloadBusinessCardPdf(agent, profileQr, vcardQr);
+      await downloadBusinessCardPdf(agent);
     } catch (e) {
       console.error('Failed to generate PDF:', e);
     } finally {
@@ -166,7 +166,7 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
   const handleDownloadSheetPdf = async () => {
     try {
       setDownloading('sheet-pdf');
-      await downloadBusinessCardSheetPdf(agent, profileQr, vcardQr);
+      await downloadBusinessCardSheetPdf(agent);
     } catch (e) {
       console.error('Failed to generate A4 sheet PDF:', e);
     } finally {
