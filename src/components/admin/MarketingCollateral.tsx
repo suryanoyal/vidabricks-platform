@@ -39,7 +39,7 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
     try {
       setDownloading('sheet');
       const canvas = await renderCardSheetCanvas(agent, qrDataUrl, qrType);
-      downloadCanvasAsPng(canvas, `${agent.slug}-vidabricks-card-front-and-back`);
+      await downloadCanvasAsPng(canvas, `${agent.slug}-vidabricks-card-front-and-back`);
     } catch (e) {
       console.error('Failed to generate card sheet:', e);
     } finally {
@@ -51,7 +51,7 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
     try {
       setDownloading('front');
       const canvas = await renderCardFrontCanvas(agent);
-      downloadCanvasAsPng(canvas, `${agent.slug}-vidabricks-card-front`);
+      await downloadCanvasAsPng(canvas, `${agent.slug}-vidabricks-card-front`);
     } catch (e) {
       console.error('Failed to generate front card:', e);
     } finally {
@@ -63,7 +63,7 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
     try {
       setDownloading('back');
       const canvas = await renderCardBackCanvas(agent, qrDataUrl, qrType);
-      downloadCanvasAsPng(canvas, `${agent.slug}-vidabricks-card-back-${qrType}`);
+      await downloadCanvasAsPng(canvas, `${agent.slug}-vidabricks-card-back-${qrType}`);
     } catch (e) {
       console.error('Failed to generate back card:', e);
     } finally {
@@ -76,7 +76,7 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
     try {
       setDownloading('flyer');
       const canvas = await renderFlyerCanvas(agent, qrDataUrl, qrType);
-      downloadCanvasAsPng(canvas, `${agent.slug}-vidabricks-brochure-signboard`);
+      await downloadCanvasAsPng(canvas, `${agent.slug}-vidabricks-brochure-signboard`);
     } catch (e) {
       console.error('Failed to generate flyer:', e);
     } finally {
@@ -89,7 +89,7 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
     try {
       setDownloading('story');
       const canvas = await renderStoryCanvas(agent, qrDataUrl, qrType);
-      downloadCanvasAsPng(canvas, `${agent.slug}-vidabricks-whatsapp-story`);
+      await downloadCanvasAsPng(canvas, `${agent.slug}-vidabricks-whatsapp-story`);
     } catch (e) {
       console.error('Failed to generate story:', e);
     } finally {

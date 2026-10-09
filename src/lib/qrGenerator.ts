@@ -32,19 +32,20 @@ async function loadBlackLogoImage(): Promise<HTMLImageElement | null> {
 
   return new Promise((resolve) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    // Do NOT set crossOrigin on data: URIs as it causes CORS SecurityError in Safari/Chrome
     img.onload = () => {
       cachedBlackLogoImage = img;
       resolve(img);
     };
     img.onerror = () => {
       // Fallback to direct src if data URI has an issue
-      img.src = BLACK_LOGO_SRC;
-      img.onload = () => {
-        cachedBlackLogoImage = img;
-        resolve(img);
+      const fallback = new Image();
+      fallback.onload = () => {
+        cachedBlackLogoImage = fallback;
+        resolve(fallback);
       };
-      img.onerror = () => resolve(null);
+      fallback.onerror = () => resolve(null);
+      fallback.src = BLACK_LOGO_SRC;
     };
     img.src = BLACK_LOGO_DATA_URI;
   });
@@ -193,12 +194,36 @@ export async function downloadQRCodePng(
     ...options,
   });
 
-  const link = document.createElement('a');
-  link.download = `${fileName}.png`;
-  link.href = dataUrl;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  try {
+    const arr = dataUrl.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    const blob = new Blob([u8arr], { type: mime });
+    const blobUrl = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.download = `${fileName}.png`;
+    link.href = blobUrl;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    }, 1000);
+  } catch (e) {
+    // Fallback direct link
+    const link = document.createElement('a');
+    link.download = `${fileName}.png`;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 }
 
 /**

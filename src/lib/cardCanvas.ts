@@ -1,16 +1,53 @@
+import QRCode from 'qrcode';
 import { Agent } from './types';
+import { generateVCardString } from './vcard';
 
 /**
- * Helper to load an image from a URL or Data URL asynchronously
+ * Safely load an image without throwing unhandled exceptions or tainting the canvas
  */
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
+function loadSafeImage(src: string): Promise<HTMLImageElement | null> {
+  if (!src) return Promise.resolve(null);
+  return new Promise((resolve) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    // NEVER set crossOrigin on data: or blob: URIs
+    if (src.startsWith('http://') || src.startsWith('https://')) {
+      img.crossOrigin = 'anonymous';
+    }
     img.onload = () => resolve(img);
-    img.onerror = (e) => reject(e);
+    img.onerror = () => {
+      // If CORS failed on remote URL, resolve null safely
+      resolve(null);
+    };
     img.src = src;
   });
+}
+
+/**
+ * Generate a standalone QR canvas directly in memory
+ */
+async function generateStandaloneQRCanvas(text: string, size: number): Promise<HTMLCanvasElement> {
+  const qrCanvas = document.createElement('canvas');
+  qrCanvas.width = size;
+  qrCanvas.height = size;
+  await QRCode.toCanvas(qrCanvas, text, {
+    width: size,
+    margin: 2,
+    color: { dark: '#111111', light: '#ffffff' },
+    errorCorrectionLevel: 'H',
+  });
+  return qrCanvas;
+}
+
+/**
+ * Get active QR text for agent based on qrType
+ */
+function getActiveQRText(agent: Agent, qrType: 'vcard' | 'profile'): string {
+  if (qrType === 'vcard') {
+    return generateVCardString(agent);
+  }
+  return typeof window !== 'undefined'
+    ? `${window.location.origin}/agents/${agent.slug}`
+    : `https://agents.vidabricks.com/agents/${agent.slug}`;
 }
 
 /**
@@ -85,13 +122,12 @@ export async function renderCardFrontCanvas(agent: Agent): Promise<HTMLCanvasEle
   ctx.stroke();
 
   // Draw Logo
-  try {
-    const logoImg = await loadImage('/logos/vidabricks-gold.png');
+  const logoImg = await loadSafeImage('/logos/vidabricks-gold.png');
+  if (logoImg && logoImg.width > 0 && logoImg.height > 0) {
     const logoHeight = 48;
     const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
     ctx.drawImage(logoImg, 50, 45, logoWidth, logoHeight);
 
-    // Brand text next to logo
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
     ctx.fillText('VIDABRICKS', 50 + logoWidth + 14, 68);
@@ -99,11 +135,15 @@ export async function renderCardFrontCanvas(agent: Agent): Promise<HTMLCanvasEle
     ctx.fillStyle = '#dfc77b';
     ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
     ctx.fillText('LUXURY REAL ESTATE', 50 + logoWidth + 14, 86);
-  } catch (e) {
-    // Fallback brand text
+  } else {
+    // Fallback brand vector text
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 26px system-ui, -apple-system, sans-serif';
-    ctx.fillText('VIDABRICKS REAL ESTATE', 50, 75);
+    ctx.fillText('VIDABRICKS', 50, 68);
+
+    ctx.fillStyle = '#dfc77b';
+    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
+    ctx.fillText('LUXURY REAL ESTATE', 50, 90);
   }
 
   // Top Right RERA ORN Pill
@@ -242,7 +282,7 @@ export async function renderCardBackCanvas(
   ctx.fillText('PHONE:', 50, startY);
   ctx.fillStyle = '#f1f5f9';
   ctx.font = '18px system-ui, -apple-system, sans-serif';
-  ctx.fillText(agent.phone, 135, startY);
+  ctx.fillText(agent.phone || '', 135, startY);
 
   // Email
   ctx.fillStyle = '#dfc77b';
@@ -250,7 +290,7 @@ export async function renderCardBackCanvas(
   ctx.fillText('EMAIL:', 50, startY + lineHeight);
   ctx.fillStyle = '#f1f5f9';
   ctx.font = '18px system-ui, -apple-system, sans-serif';
-  ctx.fillText(agent.email, 135, startY + lineHeight);
+  ctx.fillText(agent.email || '', 135, startY + lineHeight);
 
   // Web
   ctx.fillStyle = '#dfc77b';
@@ -279,12 +319,13 @@ export async function renderCardBackCanvas(
   roundRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 20);
   ctx.stroke();
 
-  // Draw QR Image
+  // Draw QR Image (guaranteed fallback to generateStandaloneQRCanvas)
+  let qrDrawn = false;
   if (qrDataUrl) {
-    try {
-      const qrImg = await loadImage(qrDataUrl);
+    const qrImg = await loadSafeImage(qrDataUrl);
+    if (qrImg) {
       const qrPadding = 20;
-      const qrDrawSize = qrBoxSize - qrPadding * 2 - 28; // leave space for bottom text
+      const qrDrawSize = qrBoxSize - qrPadding * 2 - 28;
       ctx.drawImage(
         qrImg,
         qrBoxX + (qrBoxSize - qrDrawSize) / 2,
@@ -292,9 +333,22 @@ export async function renderCardBackCanvas(
         qrDrawSize,
         qrDrawSize
       );
-    } catch (e) {
-      console.warn('Could not draw QR code onto canvas:', e);
+      qrDrawn = true;
     }
+  }
+
+  if (!qrDrawn) {
+    const activeText = getActiveQRText(agent, qrType);
+    const qrCanvas = await generateStandaloneQRCanvas(activeText, 240);
+    const qrPadding = 20;
+    const qrDrawSize = qrBoxSize - qrPadding * 2 - 28;
+    ctx.drawImage(
+      qrCanvas,
+      qrBoxX + (qrBoxSize - qrDrawSize) / 2,
+      qrBoxY + qrPadding,
+      qrDrawSize,
+      qrDrawSize
+    );
   }
 
   // Label under the QR code
@@ -379,8 +433,8 @@ export async function renderFlyerCanvas(
   ctx.stroke();
 
   // Header Logo & Branding
-  try {
-    const logoImg = await loadImage('/logos/vidabricks-gold.png');
+  const logoImg = await loadSafeImage('/logos/vidabricks-gold.png');
+  if (logoImg && logoImg.width > 0 && logoImg.height > 0) {
     const logoHeight = 44;
     const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
     ctx.drawImage(logoImg, 50, 40, logoWidth, logoHeight);
@@ -391,7 +445,7 @@ export async function renderFlyerCanvas(
     ctx.fillStyle = '#dfc77b';
     ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
     ctx.fillText('DUBAI LUXURY BROKERAGE', 50 + logoWidth + 14, 80);
-  } catch (e) {
+  } else {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
     ctx.fillText('VIDABRICKS REAL ESTATE', 50, 65);
@@ -455,12 +509,21 @@ export async function renderFlyerCanvas(
   roundRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 20);
   ctx.stroke();
 
+  let flyerQrDrawn = false;
   if (qrDataUrl) {
-    try {
-      const qrImg = await loadImage(qrDataUrl);
+    const qrImg = await loadSafeImage(qrDataUrl);
+    if (qrImg) {
       const drawSize = qrBoxSize - 55;
       ctx.drawImage(qrImg, qrBoxX + 27, qrBoxY + 15, drawSize, drawSize);
-    } catch (e) {}
+      flyerQrDrawn = true;
+    }
+  }
+
+  if (!flyerQrDrawn) {
+    const activeText = getActiveQRText(agent, qrType);
+    const qrCanvas = await generateStandaloneQRCanvas(activeText, 240);
+    const drawSize = qrBoxSize - 55;
+    ctx.drawImage(qrCanvas, qrBoxX + 27, qrBoxY + 15, drawSize, drawSize);
   }
 
   // QR Labels (requested by user)
@@ -527,12 +590,12 @@ export async function renderStoryCanvas(
   ctx.fillRect(0, 0, width, 14);
 
   // Logo top center
-  try {
-    const logoImg = await loadImage('/logos/vidabricks-gold.png');
+  const logoImg = await loadSafeImage('/logos/vidabricks-gold.png');
+  if (logoImg && logoImg.width > 0 && logoImg.height > 0) {
     const logoHeight = 90;
     const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
     ctx.drawImage(logoImg, (width - logoWidth) / 2, 140, logoWidth, logoHeight);
-  } catch (e) {}
+  }
 
   ctx.fillStyle = '#dfc77b';
   ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
@@ -540,30 +603,50 @@ export async function renderStoryCanvas(
   const brandSubW = ctx.measureText(brandSub).width;
   ctx.fillText(brandSub, (width - brandSubW) / 2, 270);
 
-  // Agent photo (circle)
+  // Agent photo or fallback monogram
+  const photoRadius = 130;
+  const photoCenterX = width / 2;
+  const photoCenterY = 470;
+  let photoDrawn = false;
+
   if (agent.photo && agent.photo.startsWith('http')) {
-    try {
-      const photoImg = await loadImage(agent.photo);
-      const photoRadius = 130;
-      const photoCenterX = width / 2;
-      const photoCenterY = 470;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(photoCenterX, photoCenterY, photoRadius, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
-      ctx.drawImage(photoImg, photoCenterX - photoRadius, photoCenterY - photoRadius, photoRadius * 2, photoRadius * 2);
-      ctx.restore();
-
-      // Gold ring
-      ctx.beginPath();
-      ctx.arc(photoCenterX, photoCenterY, photoRadius, 0, Math.PI * 2);
-      ctx.strokeStyle = '#c9a84c';
-      ctx.lineWidth = 6;
-      ctx.stroke();
-    } catch (e) {}
+    const photoImg = await loadSafeImage(agent.photo);
+    if (photoImg) {
+      try {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(photoCenterX, photoCenterY, photoRadius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(photoImg, photoCenterX - photoRadius, photoCenterY - photoRadius, photoRadius * 2, photoRadius * 2);
+        ctx.restore();
+        photoDrawn = true;
+      } catch (e) {}
+    }
   }
+
+  if (!photoDrawn) {
+    // Elegant luxury gold monogram
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(photoCenterX, photoCenterY, photoRadius, 0, Math.PI * 2);
+    ctx.fillStyle = '#1e293b';
+    ctx.fill();
+    ctx.restore();
+
+    ctx.fillStyle = '#dfc77b';
+    ctx.font = 'bold 80px system-ui, -apple-system, sans-serif';
+    const initials = `${agent.firstName?.[0] || ''}${agent.lastName?.[0] || ''}`;
+    const initW = ctx.measureText(initials).width;
+    ctx.fillText(initials, photoCenterX - initW / 2, photoCenterY + 28);
+  }
+
+  // Gold ring around photo
+  ctx.beginPath();
+  ctx.arc(photoCenterX, photoCenterY, photoRadius, 0, Math.PI * 2);
+  ctx.strokeStyle = '#c9a84c';
+  ctx.lineWidth = 6;
+  ctx.stroke();
 
   // Agent Name
   const fullName = `${agent.firstName} ${agent.lastName}`;
@@ -608,12 +691,21 @@ export async function renderStoryCanvas(
   roundRect(ctx, qrX, qrY, qrSize, qrSize, 36);
   ctx.stroke();
 
+  let storyQrDrawn = false;
   if (qrDataUrl) {
-    try {
-      const qrImg = await loadImage(qrDataUrl);
+    const qrImg = await loadSafeImage(qrDataUrl);
+    if (qrImg) {
       const drawSize = qrSize - 80;
       ctx.drawImage(qrImg, qrX + 40, qrY + 25, drawSize, drawSize);
-    } catch (e) {}
+      storyQrDrawn = true;
+    }
+  }
+
+  if (!storyQrDrawn) {
+    const activeText = getActiveQRText(agent, qrType);
+    const qrCanvas = await generateStandaloneQRCanvas(activeText, 440);
+    const drawSize = qrSize - 80;
+    ctx.drawImage(qrCanvas, qrX + 40, qrY + 25, drawSize, drawSize);
   }
 
   // Sublabel inside QR
@@ -633,14 +725,50 @@ export async function renderStoryCanvas(
 }
 
 /**
- * Helper to download a canvas as PNG
+ * Helper to download a canvas as PNG using Blob & ObjectURL
  */
-export function downloadCanvasAsPng(canvas: HTMLCanvasElement, filename: string): void {
-  const dataUrl = canvas.toDataURL('image/png');
-  const link = document.createElement('a');
-  link.download = `${filename}.png`;
-  link.href = dataUrl;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+export async function downloadCanvasAsPng(canvas: HTMLCanvasElement, filename: string): Promise<void> {
+  return new Promise((resolve) => {
+    try {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const blobUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.download = `${filename}.png`;
+          link.href = blobUrl;
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
+            resolve();
+          }, 1000);
+        } else {
+          // Fallback to toDataURL
+          const dataUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.download = `${filename}.png`;
+          link.href = dataUrl;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          resolve();
+        }
+      }, 'image/png');
+    } catch (e) {
+      console.warn('canvas.toBlob failed, trying fallback toDataURL:', e);
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `${filename}.png`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (err2) {
+        console.error('All PNG download methods failed:', err2);
+      }
+      resolve();
+    }
+  });
 }
