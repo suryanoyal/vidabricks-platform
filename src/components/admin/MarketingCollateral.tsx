@@ -299,7 +299,9 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
                     {agent.jobTitle}
                   </p>
                   <p className="text-[10px] text-slate-400">
-                    RERA BRN: {agent.reraNumber || 'N/A'} • Dubai, UAE
+                    {agent.reraNumber && agent.reraNumber.trim() && agent.reraNumber !== 'N/A'
+                      ? `RERA BRN: ${agent.reraNumber.trim()} • Dubai, UAE`
+                      : 'Dubai, UAE'}
                   </p>
                   <span className="inline-block px-2 py-0.5 rounded-md bg-vb-gold/20 border border-vb-gold/40 text-[8px] font-bold tracking-wider text-vb-gold-champagne uppercase">
                     View my profile on profile qr

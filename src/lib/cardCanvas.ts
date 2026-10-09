@@ -179,7 +179,10 @@ export async function renderCardFrontCanvas(
 
   ctx.fillStyle = '#94a3b8';
   ctx.font = '15px system-ui, -apple-system, sans-serif';
-  const brnText = `RERA BRN: ${agent.reraNumber || 'N/A'} • Dubai, UAE`;
+  const hasRera = Boolean(agent.reraNumber && agent.reraNumber.trim() && agent.reraNumber !== 'N/A');
+  const brnText = hasRera
+    ? `RERA BRN: ${agent.reraNumber.trim()} • Dubai, UAE`
+    : 'Dubai, UAE';
   ctx.fillText(brnText, 50, 290);
 
   // Profile QR Label Badge on Front

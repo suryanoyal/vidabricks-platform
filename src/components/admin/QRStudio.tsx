@@ -128,9 +128,11 @@ export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold font-display text-white">{fullName}</h2>
-              <span className="px-2 py-0.5 rounded-full bg-vb-gold/20 text-vb-gold-champagne text-[10px] font-bold border border-vb-gold/40">
-                BRN: {agent.reraNumber || 'N/A'}
-              </span>
+              {agent.reraNumber && agent.reraNumber.trim() && agent.reraNumber !== 'N/A' ? (
+                <span className="px-2 py-0.5 rounded-full bg-vb-gold/20 text-vb-gold-champagne text-[10px] font-bold border border-vb-gold/40">
+                  BRN: {agent.reraNumber}
+                </span>
+              ) : null}
             </div>
             <p className="text-xs text-vb-gold-light font-medium">{agent.jobTitle}</p>
             <p className="text-[11px] text-slate-400 font-mono mt-0.5">{profileUrl}</p>
