@@ -75,9 +75,12 @@ function roundRect(
 }
 
 /**
- * Render Front of Business Card on a Canvas
+ * Render Front of Business Card on a Canvas (with Profile QR Code, no NFC text)
  */
-export async function renderCardFrontCanvas(agent: Agent): Promise<HTMLCanvasElement> {
+export async function renderCardFrontCanvas(
+  agent: Agent,
+  profileQrDataUrl?: string
+): Promise<HTMLCanvasElement> {
   const width = 1050;
   const height = 600;
   const canvas = document.createElement('canvas');
@@ -124,26 +127,25 @@ export async function renderCardFrontCanvas(agent: Agent): Promise<HTMLCanvasEle
   // Draw Logo
   const logoImg = await loadSafeImage('/logos/vidabricks-gold.png');
   if (logoImg && logoImg.width > 0 && logoImg.height > 0) {
-    const logoHeight = 48;
+    const logoHeight = 44;
     const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
-    ctx.drawImage(logoImg, 50, 45, logoWidth, logoHeight);
+    ctx.drawImage(logoImg, 50, 42, logoWidth, logoHeight);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
-    ctx.fillText('VIDABRICKS', 50 + logoWidth + 14, 68);
+    ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
+    ctx.fillText('VIDABRICKS', 50 + logoWidth + 12, 63);
+
+    ctx.fillStyle = '#dfc77b';
+    ctx.font = 'bold 10px system-ui, -apple-system, sans-serif';
+    ctx.fillText('LUXURY REAL ESTATE', 50 + logoWidth + 12, 80);
+  } else {
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
+    ctx.fillText('VIDABRICKS', 50, 65);
 
     ctx.fillStyle = '#dfc77b';
     ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
-    ctx.fillText('LUXURY REAL ESTATE', 50 + logoWidth + 14, 86);
-  } else {
-    // Fallback brand vector text
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 26px system-ui, -apple-system, sans-serif';
-    ctx.fillText('VIDABRICKS', 50, 68);
-
-    ctx.fillStyle = '#dfc77b';
-    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
-    ctx.fillText('LUXURY REAL ESTATE', 50, 90);
+    ctx.fillText('LUXURY REAL ESTATE', 50, 84);
   }
 
   // Top Right RERA ORN Pill
@@ -151,7 +153,7 @@ export async function renderCardFrontCanvas(agent: Agent): Promise<HTMLCanvasEle
   ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
   const ornWidth = ctx.measureText(ornText).width;
   const pillX = width - ornWidth - 75;
-  const pillY = 52;
+  const pillY = 46;
   const pillH = 30;
 
   ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
@@ -165,20 +167,72 @@ export async function renderCardFrontCanvas(agent: Agent): Promise<HTMLCanvasEle
   ctx.fillStyle = '#dfc77b';
   ctx.fillText(ornText, pillX + 12, pillY + 20);
 
-  // Agent Details (Middle)
+  // Agent Details (Left Side)
   const fullName = `${agent.firstName} ${agent.lastName}`;
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 42px system-ui, -apple-system, sans-serif';
-  ctx.fillText(fullName, 50, 260);
+  ctx.font = 'bold 38px system-ui, -apple-system, sans-serif';
+  ctx.fillText(fullName, 50, 215);
 
   ctx.fillStyle = '#dfc77b';
-  ctx.font = '600 22px system-ui, -apple-system, sans-serif';
-  ctx.fillText(agent.jobTitle || 'Property Consultant', 50, 305);
+  ctx.font = '600 20px system-ui, -apple-system, sans-serif';
+  ctx.fillText(agent.jobTitle || 'Property Consultant', 50, 255);
 
   ctx.fillStyle = '#94a3b8';
-  ctx.font = '16px system-ui, -apple-system, sans-serif';
+  ctx.font = '15px system-ui, -apple-system, sans-serif';
   const brnText = `RERA BRN: ${agent.reraNumber || 'N/A'} • Dubai, UAE`;
-  ctx.fillText(brnText, 50, 342);
+  ctx.fillText(brnText, 50, 290);
+
+  // Profile QR Label Badge on Front
+  const profileLabel = 'VIEW MY PROFILE ON PROFILE QR';
+  ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
+  const profileLabelW = ctx.measureText(profileLabel).width;
+  ctx.fillStyle = 'rgba(201, 168, 76, 0.18)';
+  roundRect(ctx, 50, 330, profileLabelW + 20, 28, 8);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(201, 168, 76, 0.5)';
+  ctx.lineWidth = 1;
+  roundRect(ctx, 50, 330, profileLabelW + 20, 28, 8);
+  ctx.stroke();
+  ctx.fillStyle = '#dfc77b';
+  ctx.fillText(profileLabel, 60, 349);
+
+  // Right Side: PROFILE QR Code Container on Front Card
+  const qrBoxSize = 280;
+  const qrBoxX = width - qrBoxSize - 50;
+  const qrBoxY = 145;
+
+  ctx.fillStyle = '#ffffff';
+  roundRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 20);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(201, 168, 76, 0.6)';
+  ctx.lineWidth = 3;
+  roundRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 20);
+  ctx.stroke();
+
+  // Draw Profile QR
+  let profileQrDrawn = false;
+  if (profileQrDataUrl) {
+    const qrImg = await loadSafeImage(profileQrDataUrl);
+    if (qrImg) {
+      const qrDrawSize = qrBoxSize - 56;
+      ctx.drawImage(qrImg, qrBoxX + 28, qrBoxY + 16, qrDrawSize, qrDrawSize);
+      profileQrDrawn = true;
+    }
+  }
+
+  if (!profileQrDrawn) {
+    const profileUrl = getActiveQRText(agent, 'profile');
+    const qrCanvas = await generateStandaloneQRCanvas(profileUrl, 220);
+    const qrDrawSize = qrBoxSize - 56;
+    ctx.drawImage(qrCanvas, qrBoxX + 28, qrBoxY + 16, qrDrawSize, qrDrawSize);
+  }
+
+  // Label under Profile QR on Front
+  const profileBottomText = 'VIEW MY PROFILE';
+  ctx.fillStyle = '#0a0e1a';
+  ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
+  const profileBottomW = ctx.measureText(profileBottomText).width;
+  ctx.fillText(profileBottomText, qrBoxX + (qrBoxSize - profileBottomW) / 2, qrBoxY + qrBoxSize - 16);
 
   // Footer Divider Line
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
@@ -188,27 +242,27 @@ export async function renderCardFrontCanvas(agent: Agent): Promise<HTMLCanvasEle
   ctx.lineTo(width - 50, height - 70);
   ctx.stroke();
 
-  // Footer text
+  // Footer text (NO NFC Enabled!)
   ctx.fillStyle = '#94a3b8';
   ctx.font = '15px system-ui, -apple-system, sans-serif';
   ctx.fillText('Tameem House, Barsha Heights, Dubai', 50, height - 38);
 
-  const nfcText = 'NFC ENABLED';
-  ctx.fillStyle = '#dfc77b';
-  ctx.font = 'bold 15px monospace';
-  const nfcWidth = ctx.measureText(nfcText).width;
-  ctx.fillText(nfcText, width - 50 - nfcWidth, height - 38);
+  const urlText = `agents.vidabricks.com/${agent.slug}`;
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px monospace';
+  const urlWidth = ctx.measureText(urlText).width;
+  ctx.fillText(urlText, width - 50 - urlWidth, height - 38);
 
   return canvas;
 }
 
 /**
- * Render Back of Business Card on a Canvas
+ * Render Back of Business Card on a Canvas (with Contact vCard QR Code, no NFC text)
  */
 export async function renderCardBackCanvas(
   agent: Agent,
-  qrDataUrl: string,
-  qrType: 'vcard' | 'profile'
+  vcardQrDataUrl?: string,
+  _qrType?: 'vcard' | 'profile'
 ): Promise<HTMLCanvasElement> {
   const width = 1050;
   const height = 600;
@@ -246,14 +300,12 @@ export async function renderCardBackCanvas(
   roundRect(ctx, 1.5, 1.5, width - 3, height - 3, radius);
   ctx.stroke();
 
-  // Label requested by user:
-  // "Save my contact on vcard qr and view my profile on profile qr"
-  const qrActionLabel =
-    qrType === 'vcard' ? 'Save my contact on vcard qr' : 'View my profile on profile qr';
+  // Label requested by user for back contact card:
+  const contactActionLabel = 'SAVE MY CONTACT ON VCARD QR';
 
   // Label Badge Top Left
   ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
-  const labelWidth = ctx.measureText(qrActionLabel.toUpperCase()).width;
+  const labelWidth = ctx.measureText(contactActionLabel).width;
   const pillH = 30;
 
   ctx.fillStyle = 'rgba(201, 168, 76, 0.15)';
@@ -265,7 +317,7 @@ export async function renderCardBackCanvas(
   ctx.stroke();
 
   ctx.fillStyle = '#dfc77b';
-  ctx.fillText(qrActionLabel.toUpperCase(), 62, 70);
+  ctx.fillText(contactActionLabel, 62, 70);
 
   // Header
   ctx.fillStyle = '#ffffff';
@@ -300,15 +352,15 @@ export async function renderCardBackCanvas(
   ctx.font = '18px system-ui, -apple-system, sans-serif';
   ctx.fillText('vidabricks.com', 135, startY + lineHeight * 2);
 
-  // Footer notes on left
+  // Footer notes on left (NO NFC text!)
   ctx.fillStyle = '#94a3b8';
   ctx.font = '14px system-ui, -apple-system, sans-serif';
   ctx.fillText('Dubai Luxury Real Estate Brokerage', 50, height - 42);
 
-  // Right Side: QR Code Frame
-  const qrBoxSize = 310;
+  // Right Side: CONTACT QR Code Frame
+  const qrBoxSize = 280;
   const qrBoxX = width - qrBoxSize - 50;
-  const qrBoxY = (height - qrBoxSize) / 2 - 10;
+  const qrBoxY = 145;
 
   // White box with gold border
   ctx.fillStyle = '#ffffff';
@@ -319,47 +371,33 @@ export async function renderCardBackCanvas(
   roundRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 20);
   ctx.stroke();
 
-  // Draw QR Image (guaranteed fallback to generateStandaloneQRCanvas)
-  let qrDrawn = false;
-  if (qrDataUrl) {
-    const qrImg = await loadSafeImage(qrDataUrl);
+  // Draw Contact QR
+  let vcardDrawn = false;
+  if (vcardQrDataUrl) {
+    const qrImg = await loadSafeImage(vcardQrDataUrl);
     if (qrImg) {
-      const qrPadding = 20;
-      const qrDrawSize = qrBoxSize - qrPadding * 2 - 28;
-      ctx.drawImage(
-        qrImg,
-        qrBoxX + (qrBoxSize - qrDrawSize) / 2,
-        qrBoxY + qrPadding,
-        qrDrawSize,
-        qrDrawSize
-      );
-      qrDrawn = true;
+      const qrDrawSize = qrBoxSize - 56;
+      ctx.drawImage(qrImg, qrBoxX + 28, qrBoxY + 16, qrDrawSize, qrDrawSize);
+      vcardDrawn = true;
     }
   }
 
-  if (!qrDrawn) {
-    const activeText = getActiveQRText(agent, qrType);
-    const qrCanvas = await generateStandaloneQRCanvas(activeText, 240);
-    const qrPadding = 20;
-    const qrDrawSize = qrBoxSize - qrPadding * 2 - 28;
-    ctx.drawImage(
-      qrCanvas,
-      qrBoxX + (qrBoxSize - qrDrawSize) / 2,
-      qrBoxY + qrPadding,
-      qrDrawSize,
-      qrDrawSize
-    );
+  if (!vcardDrawn) {
+    const vcardText = getActiveQRText(agent, 'vcard');
+    const qrCanvas = await generateStandaloneQRCanvas(vcardText, 220);
+    const qrDrawSize = qrBoxSize - 56;
+    ctx.drawImage(qrCanvas, qrBoxX + 28, qrBoxY + 16, qrDrawSize, qrDrawSize);
   }
 
-  // Label under the QR code
-  const qrBottomText = qrType === 'vcard' ? 'Save my contact' : 'View my profile';
+  // Label under Contact QR
+  const contactBottomText = 'SAVE MY CONTACT';
   ctx.fillStyle = '#0a0e1a';
-  ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
-  const qrBottomWidth = ctx.measureText(qrBottomText.toUpperCase()).width;
+  ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
+  const contactBottomW = ctx.measureText(contactBottomText).width;
   ctx.fillText(
-    qrBottomText.toUpperCase(),
-    qrBoxX + (qrBoxSize - qrBottomWidth) / 2,
-    qrBoxY + qrBoxSize - 18
+    contactBottomText,
+    qrBoxX + (qrBoxSize - contactBottomW) / 2,
+    qrBoxY + qrBoxSize - 16
   );
 
   return canvas;
@@ -367,14 +405,15 @@ export async function renderCardBackCanvas(
 
 /**
  * Render Both Front and Back side-by-side onto a single high-resolution Canvas
+ * Front has Profile QR, Back has Contact vCard QR
  */
 export async function renderCardSheetCanvas(
   agent: Agent,
-  qrDataUrl: string,
-  qrType: 'vcard' | 'profile'
+  profileQrDataUrl?: string,
+  vcardQrDataUrl?: string
 ): Promise<HTMLCanvasElement> {
-  const frontCanvas = await renderCardFrontCanvas(agent);
-  const backCanvas = await renderCardBackCanvas(agent, qrDataUrl, qrType);
+  const frontCanvas = await renderCardFrontCanvas(agent, profileQrDataUrl);
+  const backCanvas = await renderCardBackCanvas(agent, vcardQrDataUrl);
 
   const padding = 50;
   const totalWidth = frontCanvas.width * 2 + padding * 3;
@@ -390,10 +429,10 @@ export async function renderCardSheetCanvas(
   ctx.fillStyle = '#070a12';
   ctx.fillRect(0, 0, totalWidth, totalHeight);
 
-  // Draw Front
+  // Draw Front (Profile QR)
   ctx.drawImage(frontCanvas, padding, padding);
 
-  // Draw Back
+  // Draw Back (Contact QR)
   ctx.drawImage(backCanvas, frontCanvas.width + padding * 2, padding);
 
   return canvas;
