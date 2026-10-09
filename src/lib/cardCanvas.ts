@@ -609,19 +609,37 @@ export async function renderStoryCanvas(
   const photoCenterY = 470;
   let photoDrawn = false;
 
-  if (agent.photo && agent.photo.startsWith('http')) {
+  if (agent.photo && agent.photo.trim().length > 5) {
     const photoImg = await loadSafeImage(agent.photo);
-    if (photoImg) {
+    if (photoImg && photoImg.width > 0 && photoImg.height > 0) {
       try {
         ctx.save();
         ctx.beginPath();
         ctx.arc(photoCenterX, photoCenterY, photoRadius, 0, Math.PI * 2);
         ctx.closePath();
         ctx.clip();
-        ctx.drawImage(photoImg, photoCenterX - photoRadius, photoCenterY - photoRadius, photoRadius * 2, photoRadius * 2);
+
+        // Calculate aspect-ratio cover to prevent image distortion
+        const aspect = photoImg.width / photoImg.height;
+        let drawW = photoRadius * 2;
+        let drawH = photoRadius * 2;
+        let offsetX = photoCenterX - photoRadius;
+        let offsetY = photoCenterY - photoRadius;
+
+        if (aspect > 1) {
+          drawW = drawH * aspect;
+          offsetX = photoCenterX - drawW / 2;
+        } else {
+          drawH = drawW / aspect;
+          offsetY = photoCenterY - drawH / 2;
+        }
+
+        ctx.drawImage(photoImg, offsetX, offsetY, drawW, drawH);
         ctx.restore();
         photoDrawn = true;
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Could not draw agent photo:', e);
+      }
     }
   }
 
