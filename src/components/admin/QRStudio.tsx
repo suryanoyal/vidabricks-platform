@@ -204,6 +204,13 @@ export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
               )}
             </div>
 
+            {/* Dynamic Action Label */}
+            <div className="py-2.5 px-3.5 rounded-xl bg-vb-gold/15 border border-vb-gold/40 text-center shadow-inner">
+              <span className="text-xs font-bold text-vb-gold-champagne tracking-wide">
+                {qrType === 'vcard' ? 'Save my contact on vcard qr' : 'View my profile on profile qr'}
+              </span>
+            </div>
+
             {/* QR Content Type: vCard Contact Card vs Profile URL */}
             <div className="space-y-2 text-left">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block">
@@ -213,24 +220,24 @@ export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
                 <button
                   type="button"
                   onClick={() => setQrType('vcard')}
-                  className={`py-2 px-2.5 rounded-xl text-xs font-semibold transition-all border ${
+                  className={`py-2 px-2 rounded-xl text-xs font-semibold transition-all border ${
                     qrType === 'vcard'
                       ? 'bg-vb-gold text-vb-black border-vb-gold shadow-sm'
                       : 'bg-vb-dark border-vb-border text-slate-400 hover:text-white'
                   }`}
                 >
-                  vCard Contact Card
+                  Save my contact (vCard QR)
                 </button>
                 <button
                   type="button"
                   onClick={() => setQrType('profile')}
-                  className={`py-2 px-2.5 rounded-xl text-xs font-semibold transition-all border ${
+                  className={`py-2 px-2 rounded-xl text-xs font-semibold transition-all border ${
                     qrType === 'profile'
                       ? 'bg-vb-gold text-vb-black border-vb-gold shadow-sm'
                       : 'bg-vb-dark border-vb-border text-slate-400 hover:text-white'
                   }`}
                 >
-                  Profile Web Link
+                  View my profile (Profile QR)
                 </button>
               </div>
             </div>
@@ -303,7 +310,7 @@ export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
               <span className="text-xs text-vb-gold-light font-medium">Auto-Formatted</span>
             </div>
 
-            <MarketingCollateral agent={agent} qrDataUrl={qrDataUrl} />
+            <MarketingCollateral agent={agent} qrDataUrl={qrDataUrl} qrType={qrType} />
           </div>
         </div>
       </div>
