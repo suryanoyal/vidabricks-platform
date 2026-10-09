@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Download,
@@ -39,13 +39,23 @@ export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
     ? `${window.location.origin}/agents/${agent.slug}`
     : `https://agents.vidabricks.com/agents/${agent.slug}`;
 
-  const vcardString = generateVCardString(agent);
+  const vcardString = useMemo(() => generateVCardString(agent), [
+    agent.id,
+    agent.firstName,
+    agent.lastName,
+    agent.phone,
+    agent.email,
+    agent.jobTitle,
+    agent.whatsapp,
+    agent.updatedAt,
+  ]);
   const activeQrText = qrType === 'vcard' ? vcardString : profileUrl;
 
   const fullName = `${agent.firstName} ${agent.lastName}`;
 
   // Generate QR based on style and content
   useEffect(() => {
+    let isCancelled = false;
     setLoading(true);
 
     const styleOptions = {
@@ -65,8 +75,10 @@ export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
       ...styleOptions,
     })
       .then((url) => {
-        setQrDataUrl(url);
-        setLoading(false);
+        if (!isCancelled) {
+          setQrDataUrl(url);
+          setLoading(false);
+        }
       })
       .catch(async (err) => {
         console.warn('Custom logo QR failed, generating fallback QR:', err);
@@ -77,10 +89,16 @@ export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
             margin: 2,
             color: styleOptions.color,
           });
-          setQrDataUrl(fallbackUrl);
+          if (!isCancelled) {
+            setQrDataUrl(fallbackUrl);
+          }
         } catch (e) {}
-        setLoading(false);
+        if (!isCancelled) setLoading(false);
       });
+
+    return () => {
+      isCancelled = true;
+    };
   }, [activeQrText, qrStyle]);
 
   const handleCopyUrl = async () => {

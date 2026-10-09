@@ -20,7 +20,7 @@ export function generateVCardString(agent: Agent, settings?: BrokerageSettings):
     `EMAIL;TYPE=WORK,INTERNET:${agent.email}`,
     `ADR;TYPE=WORK:;;Tameem House, Barsha Heights;Dubai;;;United Arab Emirates`,
     agent.photo && agent.photo.startsWith('http') ? `PHOTO;VALUE=URI:${agent.photo}` : '',
-    'REV:' + new Date().toISOString(),
+    agent.updatedAt || agent.createdAt ? `REV:${agent.updatedAt || agent.createdAt}` : '',
     'END:VCARD',
   ];
 

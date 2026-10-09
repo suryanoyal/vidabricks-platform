@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { X, Download, Copy, Check, Sparkles } from 'lucide-react';
 import { Agent } from '@/lib/types';
 import { generateAgentQRCodeDataUrl, downloadQRCodePng } from '@/lib/qrGenerator';
@@ -22,13 +22,28 @@ export const InPersonQRModal: React.FC<InPersonQRModalProps> = ({ isOpen, onClos
     ? `${window.location.origin}/agents/${agent.slug}`
     : `https://agents.vidabricks.com/agents/${agent.slug}`;
 
-  const vcardData = generateVCardString(agent);
+  const vcardData = useMemo(() => generateVCardString(agent), [
+    agent.id,
+    agent.firstName,
+    agent.lastName,
+    agent.phone,
+    agent.email,
+    agent.jobTitle,
+    agent.whatsapp,
+    agent.updatedAt,
+  ]);
 
   useEffect(() => {
+    let isCancelled = false;
     if (isOpen) {
-      generateAgentQRCodeDataUrl(vcardData, { width: 800 }).then(setQrDataUrl);
+      generateAgentQRCodeDataUrl(vcardData, { width: 800 }).then((url) => {
+        if (!isCancelled) setQrDataUrl(url);
+      });
       platformStore.trackEvent(agent.id, 'qr_scan', { context: 'in_person_modal_opened' });
     }
+    return () => {
+      isCancelled = true;
+    };
   }, [isOpen, vcardData, agent.id]);
 
   if (!isOpen) return null;
