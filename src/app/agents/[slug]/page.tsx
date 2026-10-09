@@ -29,9 +29,12 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const agent = INITIAL_AGENTS.find(
-    (a) => a.slug.toLowerCase() === params.slug.toLowerCase()
-  );
+  const cloudAgent = await supabaseApi.fetchAgentBySlug(params.slug);
+  const agent =
+    cloudAgent ||
+    INITIAL_AGENTS.find(
+      (a) => a.slug.toLowerCase() === params.slug.toLowerCase()
+    );
 
   if (!agent) {
     return {
@@ -75,10 +78,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function AgentPage({ params }: PageProps) {
-  const initialAgent = INITIAL_AGENTS.find(
-    (a) => a.slug.toLowerCase() === params.slug.toLowerCase()
-  );
+export default async function AgentPage({ params }: PageProps) {
+  const cloudAgent = await supabaseApi.fetchAgentBySlug(params.slug);
+  const initialAgent =
+    cloudAgent ||
+    INITIAL_AGENTS.find(
+      (a) => a.slug.toLowerCase() === params.slug.toLowerCase()
+    );
 
   const jsonLd = initialAgent
     ? {

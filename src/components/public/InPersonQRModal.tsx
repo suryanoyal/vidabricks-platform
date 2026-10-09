@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { X, Download, Copy, Check, Sparkles } from 'lucide-react';
 import { Agent } from '@/lib/types';
 import { generateAgentQRCodeDataUrl, downloadQRCodePng } from '@/lib/qrGenerator';
+import { generateVCardString } from '@/lib/vcard';
 import { copyToClipboard } from '@/lib/utils';
 import { platformStore } from '@/lib/store';
 
@@ -21,12 +22,14 @@ export const InPersonQRModal: React.FC<InPersonQRModalProps> = ({ isOpen, onClos
     ? `${window.location.origin}/agents/${agent.slug}`
     : `https://agents.vidabricks.com/agents/${agent.slug}`;
 
+  const vcardData = generateVCardString(agent);
+
   useEffect(() => {
     if (isOpen) {
-      generateAgentQRCodeDataUrl(profileUrl, { width: 800 }).then(setQrDataUrl);
+      generateAgentQRCodeDataUrl(vcardData, { width: 800 }).then(setQrDataUrl);
       platformStore.trackEvent(agent.id, 'qr_scan', { context: 'in_person_modal_opened' });
     }
-  }, [isOpen, profileUrl, agent.id]);
+  }, [isOpen, vcardData, agent.id]);
 
   if (!isOpen) return null;
 
@@ -39,7 +42,7 @@ export const InPersonQRModal: React.FC<InPersonQRModalProps> = ({ isOpen, onClos
   };
 
   const handleDownload = () => {
-    downloadQRCodePng(profileUrl, `${agent.firstName}_${agent.lastName}_QR`, 1024);
+    downloadQRCodePng(vcardData, `${agent.firstName}_${agent.lastName}_VidaBricks_vCard_QR`, 1024);
   };
 
   return (

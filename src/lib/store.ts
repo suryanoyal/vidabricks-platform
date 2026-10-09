@@ -11,14 +11,6 @@ const ANALYTICS_STORAGE_KEY = 'vidabricks_analytics_v1';
 const LEADS_STORAGE_KEY = 'vidabricks_leads_v1';
 const AUTH_STORAGE_KEY = 'vidabricks_admin_auth_v1';
 
-// In-memory fallback and singleton cache
-let memoryAgents: Agent[] = [...INITIAL_AGENTS];
-let memorySettings: BrokerageSettings = { ...DEFAULT_BROKERAGE_SETTINGS };
-let memoryAnalytics: AnalyticsEvent[] = [];
-let memoryLeads: LeadInquiry[] = [...INITIAL_LEADS];
-let memoryAdmin: AdminUser | null = null;
-let isCloudSynced = false;
-
 type Listener = () => void;
 const listeners: Set<Listener> = new Set();
 
@@ -51,7 +43,45 @@ function setLocalItem<T>(key: string, value: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (e) {
-    console.error('Storage write error:', e);
+    console.warn('Storage write error (quota or unavailable):', e);
+    // If saving agents array failed due to quota (e.g. large base64 photos), save a lightweight copy
+    if (key === AGENTS_STORAGE_KEY && Array.isArray(value)) {
+      try {
+        const lightweight = (value as Agent[]).map((a) => ({
+          ...a,
+          photo: a.photo && a.photo.length > 5000 ? '' : a.photo,
+        }));
+        localStorage.setItem(key, JSON.stringify(lightweight));
+      } catch (e2) {
+        // Ignored
+      }
+    }
+  }
+}
+
+// In-memory fallback and singleton cache
+let memoryAgents: Agent[] = [...INITIAL_AGENTS];
+let memorySettings: BrokerageSettings = { ...DEFAULT_BROKERAGE_SETTINGS };
+let memoryAnalytics: AnalyticsEvent[] = [];
+let memoryLeads: LeadInquiry[] = [...INITIAL_LEADS];
+let memoryAdmin: AdminUser | null = null;
+let isCloudSynced = false;
+let isInitialized = false;
+
+function initFromStorage() {
+  if (typeof window === 'undefined' || isInitialized) return;
+  isInitialized = true;
+  const storedAgents = getLocalItem<Agent[] | null>(AGENTS_STORAGE_KEY, null);
+  if (storedAgents && Array.isArray(storedAgents) && storedAgents.length > 0) {
+    memoryAgents = storedAgents;
+  }
+  const storedSettings = getLocalItem<BrokerageSettings | null>(SETTINGS_STORAGE_KEY, null);
+  if (storedSettings) {
+    memorySettings = { ...DEFAULT_BROKERAGE_SETTINGS, ...storedSettings };
+  }
+  const storedLeads = getLocalItem<LeadInquiry[] | null>(LEADS_STORAGE_KEY, null);
+  if (storedLeads && Array.isArray(storedLeads) && storedLeads.length > 0) {
+    memoryLeads = storedLeads;
   }
 }
 
@@ -85,14 +115,14 @@ function initializeSeedAnalytics(agents: Agent[]): AnalyticsEvent[] {
 
 // Background sync from Supabase if configured
 async function syncFromCloud() {
-  if (!isSupabaseConfigured || typeof window === 'undefined' || isCloudSynced) return;
-  isCloudSynced = true;
+  if (!isSupabaseConfigured || typeof window === 'undefined') return;
 
   try {
     const cloudAgents = await supabaseApi.fetchAgents();
     if (cloudAgents && cloudAgents.length > 0) {
       memoryAgents = cloudAgents;
       setLocalItem(AGENTS_STORAGE_KEY, cloudAgents);
+      isCloudSynced = true;
       notifyListeners();
     }
 
@@ -114,11 +144,10 @@ async function syncFromCloud() {
   }
 }
 
-// Trigger initial cloud sync when in browser
+// Trigger initial cloud sync immediately when in browser
 if (typeof window !== 'undefined') {
-  setTimeout(() => {
-    syncFromCloud();
-  }, 100);
+  initFromStorage();
+  syncFromCloud();
 }
 
 export const platformStore = {
@@ -144,6 +173,7 @@ export const platformStore = {
         memoryLeads = cloudLeads;
         setLocalItem(LEADS_STORAGE_KEY, cloudLeads);
       }
+      isCloudSynced = true;
       notifyListeners();
       return true;
     } catch (e) {
@@ -151,22 +181,40 @@ export const platformStore = {
     }
   },
 
+  // Cache an agent in memory without triggering a write-back to Supabase
+  cacheAgent(agent: Agent): void {
+    initFromStorage();
+    const idx = memoryAgents.findIndex(
+      (a) => a.id === agent.id || a.slug.toLowerCase() === agent.slug.toLowerCase()
+    );
+    if (idx !== -1) {
+      memoryAgents[idx] = { ...memoryAgents[idx], ...agent };
+    } else {
+      memoryAgents.push(agent);
+    }
+    setLocalItem(AGENTS_STORAGE_KEY, memoryAgents);
+    notifyListeners();
+  },
+
   // --- AGENTS ---
   getAgents(): Agent[] {
-    if (typeof window === 'undefined') return memoryAgents;
-    const stored = getLocalItem<Agent[]>(AGENTS_STORAGE_KEY, INITIAL_AGENTS);
-    memoryAgents = stored;
-    return stored;
+    initFromStorage();
+    return memoryAgents;
   },
 
   getAgentBySlug(slug: string): Agent | undefined {
-    const agents = this.getAgents();
-    return agents.find((a) => a.slug.toLowerCase() === slug.toLowerCase());
+    initFromStorage();
+    const clean = (slug || '').toLowerCase();
+    const found = memoryAgents.find((a) => a.slug.toLowerCase() === clean);
+    if (found) return found;
+    return INITIAL_AGENTS.find((a) => a.slug.toLowerCase() === clean);
   },
 
   getAgentById(id: string): Agent | undefined {
-    const agents = this.getAgents();
-    return agents.find((a) => a.id === id);
+    initFromStorage();
+    const found = memoryAgents.find((a) => a.id === id);
+    if (found) return found;
+    return INITIAL_AGENTS.find((a) => a.id === id);
   },
 
   saveAgent(agentData: Omit<Agent, 'id' | 'createdAt' | 'updatedAt' | 'profileViews' | 'whatsappClicks' | 'callClicks' | 'emailClicks' | 'vcardDownloads' | 'shares' | 'inquiriesCount'> & { id?: string }): Agent {

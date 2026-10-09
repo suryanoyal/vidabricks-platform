@@ -23,6 +23,9 @@ export default function AdminLeadsPage() {
 
   useEffect(() => {
     setLeads(platformStore.getLeads());
+    platformStore.refreshFromCloud().then(() => {
+      setLeads(platformStore.getLeads());
+    });
     const unsubscribe = subscribeToStore(() => {
       setLeads(platformStore.getLeads());
     });

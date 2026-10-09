@@ -13,6 +13,9 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     setSettings(platformStore.getSettings());
+    platformStore.refreshFromCloud().then(() => {
+      setSettings(platformStore.getSettings());
+    });
     const unsubscribe = subscribeToStore(() => {
       setSettings(platformStore.getSettings());
     });

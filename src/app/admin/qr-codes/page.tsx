@@ -35,6 +35,19 @@ export default function QRCodesHubPage() {
       setQrCache((prev) => ({ ...prev, [agent.id]: dataUrl }));
     });
 
+    platformStore.refreshFromCloud().then(() => {
+      const freshList = platformStore.getAgents();
+      setAgents(freshList);
+      freshList.forEach(async (agent) => {
+        const profileUrl = typeof window !== 'undefined'
+          ? `${window.location.origin}/agents/${agent.slug}`
+          : `https://agents.vidabricks.com/agents/${agent.slug}`;
+
+        const dataUrl = await generateAgentQRCodeDataUrl(profileUrl, { width: 512 });
+        setQrCache((prev) => ({ ...prev, [agent.id]: dataUrl }));
+      });
+    });
+
     const unsubscribe = subscribeToStore(() => {
       setAgents(platformStore.getAgents());
     });

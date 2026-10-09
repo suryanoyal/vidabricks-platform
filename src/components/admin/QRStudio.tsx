@@ -20,6 +20,7 @@ import {
   downloadQRCodePng,
   downloadQRCodeSvg,
 } from '@/lib/qrGenerator';
+import { generateVCardString } from '@/lib/vcard';
 import { copyToClipboard } from '@/lib/utils';
 import { MarketingCollateral } from './MarketingCollateral';
 
@@ -30,6 +31,7 @@ interface QRStudioProps {
 export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [qrStyle, setQrStyle] = useState<'classic' | 'gold-dark' | 'minimal'>('classic');
+  const [qrType, setQrType] = useState<'vcard' | 'profile'>('vcard');
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -37,9 +39,12 @@ export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
     ? `${window.location.origin}/agents/${agent.slug}`
     : `https://agents.vidabricks.com/agents/${agent.slug}`;
 
+  const vcardString = generateVCardString(agent);
+  const activeQrText = qrType === 'vcard' ? vcardString : profileUrl;
+
   const fullName = `${agent.firstName} ${agent.lastName}`;
 
-  // Generate QR based on style
+  // Generate QR based on style and content
   useEffect(() => {
     setLoading(true);
 
@@ -55,7 +60,7 @@ export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
       },
     }[qrStyle];
 
-    generateAgentQRCodeDataUrl(profileUrl, {
+    generateAgentQRCodeDataUrl(activeQrText, {
       width: 1024,
       ...styleOptions,
     })
@@ -67,7 +72,7 @@ export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
         console.warn('Custom logo QR failed, generating fallback QR:', err);
         try {
           const QRCode = (await import('qrcode')).default;
-          const fallbackUrl = await QRCode.toDataURL(profileUrl, {
+          const fallbackUrl = await QRCode.toDataURL(activeQrText, {
             width: 1024,
             margin: 2,
             color: styleOptions.color,
@@ -76,7 +81,7 @@ export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
         } catch (e) {}
         setLoading(false);
       });
-  }, [profileUrl, qrStyle]);
+  }, [activeQrText, qrStyle]);
 
   const handleCopyUrl = async () => {
     const success = await copyToClipboard(profileUrl);
@@ -87,11 +92,11 @@ export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
   };
 
   const handleDownloadPng = (size: number = 1024) => {
-    downloadQRCodePng(profileUrl, `${agent.slug}-vidabricks-qr-${size}x${size}`, size);
+    downloadQRCodePng(activeQrText, `${agent.slug}-${qrType === 'vcard' ? 'vcard' : 'profile'}-qr-${size}x${size}`, size);
   };
 
   const handleDownloadSvg = () => {
-    downloadQRCodeSvg(profileUrl, `${agent.slug}-vidabricks-qr-vector`, 800);
+    downloadQRCodeSvg(activeQrText, `${agent.slug}-${qrType === 'vcard' ? 'vcard' : 'profile'}-qr-vector`, 800);
   };
 
   return (
@@ -179,6 +184,37 @@ export const QRStudio: React.FC<QRStudioProps> = ({ agent }) => {
                   className="w-56 h-56 object-contain mx-auto"
                 />
               )}
+            </div>
+
+            {/* QR Content Type: vCard Contact Card vs Profile URL */}
+            <div className="space-y-2 text-left">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block">
+                QR Encoding Content
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setQrType('vcard')}
+                  className={`py-2 px-2.5 rounded-xl text-xs font-semibold transition-all border ${
+                    qrType === 'vcard'
+                      ? 'bg-vb-gold text-vb-black border-vb-gold shadow-sm'
+                      : 'bg-vb-dark border-vb-border text-slate-400 hover:text-white'
+                  }`}
+                >
+                  vCard Contact Card
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQrType('profile')}
+                  className={`py-2 px-2.5 rounded-xl text-xs font-semibold transition-all border ${
+                    qrType === 'profile'
+                      ? 'bg-vb-gold text-vb-black border-vb-gold shadow-sm'
+                      : 'bg-vb-dark border-vb-border text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Profile Web Link
+                </button>
+              </div>
             </div>
 
             {/* Style Selector */}

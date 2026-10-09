@@ -127,6 +127,44 @@ export const supabaseApi = {
     }
   },
 
+  async fetchAgentBySlug(slug: string): Promise<Agent | null> {
+    if (!supabase) return null;
+    try {
+      const cleanSlug = (slug || '')
+        .replace(/^\/+|\/+$/g, '')
+        .replace(/^agents\//, '')
+        .toLowerCase();
+      const { data, error } = await supabase
+        .from('agents')
+        .select('*')
+        .ilike('slug', cleanSlug)
+        .maybeSingle();
+
+      if (error || !data) return null;
+      return mapDbAgentToAgent(data);
+    } catch (e) {
+      console.warn('Failed to fetch agent by slug from Supabase:', e);
+      return null;
+    }
+  },
+
+  async fetchAgentById(id: string): Promise<Agent | null> {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from('agents')
+        .select('*')
+        .or(`id.eq.${id},slug.eq.${id}`)
+        .maybeSingle();
+
+      if (error || !data) return null;
+      return mapDbAgentToAgent(data);
+    } catch (e) {
+      console.warn('Failed to fetch agent by id from Supabase:', e);
+      return null;
+    }
+  },
+
   async saveAgent(agent: Agent): Promise<boolean> {
     if (!supabase) return false;
     try {

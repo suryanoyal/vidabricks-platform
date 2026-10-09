@@ -32,6 +32,11 @@ export default function AdminDashboardPage() {
     setEvents(platformStore.getAnalyticsEvents());
     setLeads(platformStore.getLeads());
 
+    platformStore.refreshFromCloud().then(() => {
+      setAgents(platformStore.getAgents());
+      setLeads(platformStore.getLeads());
+    });
+
     const unsubscribe = subscribeToStore(() => {
       setAgents(platformStore.getAgents());
       setEvents(platformStore.getAnalyticsEvents());

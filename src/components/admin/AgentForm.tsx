@@ -198,7 +198,40 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, isEditing = f
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
-        setFormData((prev) => ({ ...prev, photo: reader.result as string }));
+        const rawDataUrl = reader.result as string;
+        // Client-side image compression: max 800px width/height, 85% JPEG quality
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL('image/jpeg', 0.85);
+            setFormData((prev) => ({ ...prev, photo: compressed }));
+          } else {
+            setFormData((prev) => ({ ...prev, photo: rawDataUrl }));
+          }
+        };
+        img.onerror = () => {
+          setFormData((prev) => ({ ...prev, photo: rawDataUrl }));
+        };
+        img.src = rawDataUrl;
       }
     };
     reader.readAsDataURL(file);

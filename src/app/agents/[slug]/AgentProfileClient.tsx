@@ -70,7 +70,7 @@ export const AgentProfileClient: React.FC<AgentProfileClientProps> = ({
             const mapped = mapDbAgentToAgent(data);
             setAgent(mapped);
             setLoading(false);
-            platformStore.saveAgent(mapped);
+            platformStore.cacheAgent(mapped);
             platformStore.trackEvent(mapped.id, 'profile_view');
             return;
           }
@@ -96,7 +96,7 @@ export const AgentProfileClient: React.FC<AgentProfileClientProps> = ({
             if (payload.new) {
               const updated = mapDbAgentToAgent(payload.new);
               setAgent(updated);
-              platformStore.saveAgent(updated);
+              platformStore.cacheAgent(updated);
             }
           }
         )
