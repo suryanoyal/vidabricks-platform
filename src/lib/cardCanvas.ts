@@ -835,7 +835,52 @@ export async function downloadCanvasAsPng(canvas: HTMLCanvasElement, filename: s
 }
 
 /**
- * Export ultra-crisp print-ready 3.5" x 2" Double-Sided Business Card PDF (Front & Back)
+ * Export ultra-crisp print-ready 3.5" x 2" Single-Sided Business Card PDF (1 Page Only: Front or Back)
+ * Formatted precisely to standard 3.5" × 2" (88.9mm × 50.8mm) with zero borders or extraneous elements.
+ * A person or print shop can open this single file and hit print with 0 technical steps.
+ */
+export async function downloadBusinessCardSinglePdf(
+  agent: Agent,
+  side: 'front' | 'back',
+  qrDataUrl?: string
+): Promise<void> {
+  const canvas =
+    side === 'front'
+      ? await renderCardFrontCanvas(agent, qrDataUrl)
+      : await renderCardBackCanvas(agent, qrDataUrl);
+
+  const cardWidthMm = 88.9; // standard 3.5 in
+  const cardHeightMm = 50.8; // standard 2.0 in
+
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: [cardWidthMm, cardHeightMm],
+    compress: true,
+  });
+
+  const img = canvas.toDataURL('image/png', 1.0);
+  doc.addImage(img, 'PNG', 0, 0, cardWidthMm, cardHeightMm, undefined, 'FAST');
+
+  const sideLabel = side === 'front' ? 'FRONT' : 'BACK';
+  doc.save(`${agent.slug}-card-${sideLabel}-print-ready.pdf`);
+}
+
+/**
+ * Downloads TWO separate print-ready PDFs (one for Front, one for Back) in sequence.
+ */
+export async function downloadBusinessCardBothSeparatePdfs(
+  agent: Agent,
+  profileQrDataUrl?: string,
+  vcardQrDataUrl?: string
+): Promise<void> {
+  await downloadBusinessCardSinglePdf(agent, 'front', profileQrDataUrl);
+  await new Promise((resolve) => setTimeout(resolve, 600));
+  await downloadBusinessCardSinglePdf(agent, 'back', vcardQrDataUrl);
+}
+
+/**
+ * Export ultra-crisp print-ready 3.5" x 2" Double-Sided Business Card PDF (Combined 2 Pages: Front & Back)
  */
 export async function downloadBusinessCardPdf(
   agent: Agent,

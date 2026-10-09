@@ -12,6 +12,8 @@ import {
   renderFlyerCanvas,
   renderStoryCanvas,
   downloadCanvasAsPng,
+  downloadBusinessCardSinglePdf,
+  downloadBusinessCardBothSeparatePdfs,
   downloadBusinessCardPdf,
   downloadBusinessCardSheetPdf,
   downloadFlyerPdf,
@@ -70,7 +72,40 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
     qrType === 'vcard' ? 'Save my contact on vcard qr' : 'View my profile on profile qr';
   const activeQrSubLabel = qrType === 'vcard' ? 'Save my contact' : 'View my profile';
 
-  // Handlers for Business Card (PDF & PNG)
+  // Handlers for Separate Front & Back Print-Ready PDFs
+  const handleDownloadFrontPdf = async () => {
+    try {
+      setDownloading('front-pdf');
+      await downloadBusinessCardSinglePdf(agent, 'front', profileQr);
+    } catch (e) {
+      console.error('Failed to generate front PDF:', e);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const handleDownloadBackPdf = async () => {
+    try {
+      setDownloading('back-pdf');
+      await downloadBusinessCardSinglePdf(agent, 'back', vcardQr);
+    } catch (e) {
+      console.error('Failed to generate back PDF:', e);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const handleDownloadBothSeparatePdfs = async () => {
+    try {
+      setDownloading('both-pdf');
+      await downloadBusinessCardBothSeparatePdfs(agent, profileQr, vcardQr);
+    } catch (e) {
+      console.error('Failed to generate both PDFs:', e);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   const handleDownloadPdf = async () => {
     try {
       setDownloading('pdf');
@@ -214,64 +249,81 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
         <div className="flex items-center gap-2 flex-wrap">
           {activeTab === 'business-card' && (
             <>
+              {/* PRIMARY ACTION: Two Separate Print-Ready PDFs */}
               <button
-                onClick={handleDownloadPdf}
+                onClick={handleDownloadBothSeparatePdfs}
                 disabled={downloading !== null}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-vb-gold to-vb-gold-light hover:brightness-110 text-vb-black text-xs font-bold transition-all shadow-gold-subtle disabled:opacity-50"
-                title="Download Print-Ready 3.5″ × 2″ Double-Sided Business Card PDF"
+                title="Download 2 Separate Print-Ready PDFs: Front Card & Back Card"
               >
-                {downloading === 'pdf' ? (
+                {downloading === 'both-pdf' ? (
                   <div className="w-3.5 h-3.5 border-2 border-vb-black border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <FileText className="w-3.5 h-3.5" />
                 )}
-                <span>Download PDF (Print-Ready)</span>
+                <span>Download Both (PDFs)</span>
               </button>
 
               <button
-                onClick={handleDownloadSheetPdf}
+                onClick={handleDownloadFrontPdf}
                 disabled={downloading !== null}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-vb-card hover:bg-vb-card-hover border border-vb-gold/50 text-vb-gold-champagne text-xs font-semibold transition-all disabled:opacity-50"
-                title="Download A4 Presentation & Cutting Sheet (PDF)"
+                className="flex items-center gap-1 px-3 py-2 rounded-xl bg-vb-card hover:bg-vb-card-hover border border-vb-gold/40 text-vb-gold-champagne text-xs font-semibold transition-all disabled:opacity-50"
+                title="Download Front Card Only (Exact 3.5″ × 2″ Print-Ready PDF)"
               >
-                {downloading === 'sheet-pdf' ? (
-                  <div className="w-3.5 h-3.5 border-2 border-vb-gold border-t-transparent rounded-full animate-spin" />
+                {downloading === 'front-pdf' ? (
+                  <div className="w-3 h-3 border-2 border-vb-gold border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <Download className="w-3 h-3 text-vb-gold-light" />
+                  <FileText className="w-3 h-3 text-vb-gold-light" />
                 )}
-                <span>A4 Sheet (PDF)</span>
+                <span>Front (PDF)</span>
               </button>
+
+              <button
+                onClick={handleDownloadBackPdf}
+                disabled={downloading !== null}
+                className="flex items-center gap-1 px-3 py-2 rounded-xl bg-vb-card hover:bg-vb-card-hover border border-vb-gold/40 text-vb-gold-champagne text-xs font-semibold transition-all disabled:opacity-50"
+                title="Download Back Card Only (Exact 3.5″ × 2″ Print-Ready PDF)"
+              >
+                {downloading === 'back-pdf' ? (
+                  <div className="w-3 h-3 border-2 border-vb-gold border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <FileText className="w-3 h-3 text-vb-gold-light" />
+                )}
+                <span>Back (PDF)</span>
+              </button>
+
+              <div className="h-5 w-px bg-vb-border mx-0.5" />
 
               <button
                 onClick={handleDownloadSheet}
                 disabled={downloading !== null}
-                className="flex items-center gap-1 px-3 py-2 rounded-xl bg-vb-navy hover:bg-vb-border border border-vb-border text-slate-200 text-xs font-semibold transition-all disabled:opacity-50"
+                className="flex items-center gap-1 px-2.5 py-2 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-300 text-xs font-semibold transition-all disabled:opacity-50"
                 title="Download Front & Back Cards (PNG)"
               >
                 {downloading === 'sheet' ? (
-                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <Download className="w-3 h-3 text-vb-gold-light" />
                 )}
-                <span>PNG (Both)</span>
+                <span>Both (PNG)</span>
               </button>
 
               <button
                 onClick={handleDownloadFront}
                 disabled={downloading !== null}
-                className="flex items-center gap-1 px-2.5 py-2 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-300 text-xs font-semibold transition-all disabled:opacity-50"
-                title="Download Front Card (Profile QR) Only"
+                className="flex items-center gap-1 px-2 py-2 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-400 hover:text-slate-200 text-xs font-semibold transition-all disabled:opacity-50"
+                title="Download Front Card (Profile QR) Only (PNG)"
               >
-                <span>Front</span>
+                <span>Front PNG</span>
               </button>
 
               <button
                 onClick={handleDownloadBack}
                 disabled={downloading !== null}
-                className="flex items-center gap-1 px-2.5 py-2 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-300 text-xs font-semibold transition-all disabled:opacity-50"
-                title="Download Back Card (Contact QR) Only"
+                className="flex items-center gap-1 px-2 py-2 rounded-xl bg-vb-dark hover:bg-vb-navy border border-vb-border text-slate-400 hover:text-slate-200 text-xs font-semibold transition-all disabled:opacity-50"
+                title="Download Back Card (Contact QR) Only (PNG)"
               >
-                <span>Back</span>
+                <span>Back PNG</span>
               </button>
             </>
           )}
@@ -339,115 +391,151 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
         <div id="printable-card-area" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* FRONT OF CARD (PROFILE QR CODE, NO NFC ENABLED) */}
-            <div className="relative aspect-[1.75/1] rounded-2xl p-6 bg-gradient-to-br from-[#121824] via-[#0b101c] to-[#05070d] border border-vb-gold/40 shadow-2xl flex flex-col justify-between overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-vb-gold/20 to-transparent rounded-full blur-2xl pointer-events-none" />
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-vb-gold via-vb-gold-champagne to-vb-gold-dim" />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-bold text-vb-gold-champagne tracking-wider uppercase flex items-center gap-1.5">
+                  <CreditCard className="w-3.5 h-3.5 text-vb-gold-light" />
+                  Front Side (Profile QR Code)
+                </span>
+                <button
+                  onClick={handleDownloadFrontPdf}
+                  disabled={downloading !== null}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-vb-gold/20 to-vb-gold/10 hover:from-vb-gold/30 hover:to-vb-gold/20 border border-vb-gold/50 text-vb-gold-champagne text-xs font-bold transition-all disabled:opacity-50 shadow-sm"
+                  title="Download Front Card Only (Exact 3.5″ × 2″ Print-Ready PDF)"
+                >
+                  <FileText className="w-3.5 h-3.5 text-vb-gold-light" />
+                  <span>Download Front (PDF)</span>
+                </button>
+              </div>
 
-              {/* Top Branding Bar */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2.5">
-                  <img
-                    src="/logos/vidabricks-gold.png"
-                    alt="Vidabricks"
-                    className="h-8 w-auto object-contain drop-shadow"
-                  />
-                  <div>
-                    <span className="font-display font-extrabold text-sm tracking-widest text-white block">
-                      VIDABRICKS
-                    </span>
-                    <span className="text-[8px] tracking-[0.25em] text-vb-gold-champagne font-bold uppercase block">
-                      LUXURY REAL ESTATE
-                    </span>
+              <div className="relative aspect-[1.75/1] rounded-2xl p-6 bg-gradient-to-br from-[#121824] via-[#0b101c] to-[#05070d] border border-vb-gold/40 shadow-2xl flex flex-col justify-between overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-vb-gold/20 to-transparent rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-vb-gold via-vb-gold-champagne to-vb-gold-dim" />
+
+                {/* Top Branding Bar */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src="/logos/vidabricks-gold.png"
+                      alt="Vidabricks"
+                      className="h-8 w-auto object-contain drop-shadow"
+                    />
+                    <div>
+                      <span className="font-display font-extrabold text-sm tracking-widest text-white block">
+                        VIDABRICKS
+                      </span>
+                      <span className="text-[8px] tracking-[0.25em] text-vb-gold-champagne font-bold uppercase block">
+                        LUXURY REAL ESTATE
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 text-[9px] text-vb-gold-champagne bg-vb-black/60 px-2 py-0.5 rounded-full border border-vb-gold/30">
+                    <ShieldCheck className="w-2.5 h-2.5 text-vb-gold-light" />
+                    <span>RERA ORN: 28472</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 text-[9px] text-vb-gold-champagne bg-vb-black/60 px-2 py-0.5 rounded-full border border-vb-gold/30">
-                  <ShieldCheck className="w-2.5 h-2.5 text-vb-gold-light" />
-                  <span>RERA ORN: 28472</span>
+                {/* Middle Section: Agent Details (Left) + Profile QR (Right) */}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-1.5 max-w-[58%]">
+                    <h3 className="text-xl font-bold font-display text-white tracking-tight">
+                      {fullName}
+                    </h3>
+                    <p className="text-xs font-semibold text-vb-gold-light tracking-wide">
+                      {agent.jobTitle}
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      {agent.reraNumber && agent.reraNumber.trim() && agent.reraNumber !== 'N/A'
+                        ? `RERA BRN: ${agent.reraNumber.trim()} • Dubai, UAE`
+                        : 'Dubai, UAE'}
+                    </p>
+                    <span className="inline-block px-2 py-0.5 rounded-md bg-vb-gold/20 border border-vb-gold/40 text-[8px] font-bold tracking-wider text-vb-gold-champagne uppercase">
+                      View my profile on profile qr
+                    </span>
+                  </div>
+
+                  {/* Profile QR Container */}
+                  <div className="flex flex-col items-center shrink-0">
+                    <div className="p-2 bg-white rounded-xl shadow-lg border border-vb-gold/40">
+                      {profileQr || qrDataUrl ? (
+                        <img src={profileQr || qrDataUrl} alt="Profile QR Code" className="w-20 h-20 object-contain" />
+                      ) : (
+                        <div className="w-20 h-20 flex items-center justify-center text-[9px] text-slate-400">
+                          Loading QR...
+                        </div>
+                      )}
+                      <span className="block text-[7px] font-extrabold text-vb-black text-center uppercase tracking-wider mt-1">
+                        View my profile
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Footer (No NFC Enabled!) */}
+                <div className="flex items-center justify-between text-[9px] text-slate-400 pt-2 border-t border-vb-border/60">
+                  <span>Tameem House, Barsha Heights, Dubai</span>
+                  <span className="text-slate-400 font-mono">agents.vidabricks.com/{agent.slug}</span>
                 </div>
               </div>
+            </div>
 
-              {/* Middle Section: Agent Details (Left) + Profile QR (Right) */}
-              <div className="flex items-center justify-between gap-4">
-                <div className="space-y-1.5 max-w-[58%]">
-                  <h3 className="text-xl font-bold font-display text-white tracking-tight">
-                    {fullName}
-                  </h3>
-                  <p className="text-xs font-semibold text-vb-gold-light tracking-wide">
-                    {agent.jobTitle}
-                  </p>
-                  <p className="text-[10px] text-slate-400">
-                    {agent.reraNumber && agent.reraNumber.trim() && agent.reraNumber !== 'N/A'
-                      ? `RERA BRN: ${agent.reraNumber.trim()} • Dubai, UAE`
-                      : 'Dubai, UAE'}
-                  </p>
+            {/* BACK OF CARD (VCARD CONTACT QR CODE, NO NFC ENABLED) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-bold text-vb-gold-champagne tracking-wider uppercase flex items-center gap-1.5">
+                  <CreditCard className="w-3.5 h-3.5 text-vb-gold-light" />
+                  Back Side (Contact vCard QR Code)
+                </span>
+                <button
+                  onClick={handleDownloadBackPdf}
+                  disabled={downloading !== null}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-vb-gold/20 to-vb-gold/10 hover:from-vb-gold/30 hover:to-vb-gold/20 border border-vb-gold/50 text-vb-gold-champagne text-xs font-bold transition-all disabled:opacity-50 shadow-sm"
+                  title="Download Back Card Only (Exact 3.5″ × 2″ Print-Ready PDF)"
+                >
+                  <FileText className="w-3.5 h-3.5 text-vb-gold-light" />
+                  <span>Download Back (PDF)</span>
+                </button>
+              </div>
+
+              <div className="relative aspect-[1.75/1] rounded-2xl p-6 bg-gradient-to-br from-[#0c121e] to-[#04060b] border border-vb-gold/40 shadow-2xl flex items-center justify-between overflow-hidden">
+                <div className="space-y-2.5 max-w-[55%]">
                   <span className="inline-block px-2 py-0.5 rounded-md bg-vb-gold/20 border border-vb-gold/40 text-[8px] font-bold tracking-wider text-vb-gold-champagne uppercase">
-                    View my profile on profile qr
+                    Save my contact on vcard qr
                   </span>
+                  <h4 className="text-sm font-bold text-white leading-tight">
+                    Connect Directly with {agent.firstName}
+                  </h4>
+                  <div className="space-y-1 text-[10px] text-slate-300">
+                    <div className="flex items-center gap-1.5">
+                      <Phone className="w-3 h-3 text-vb-gold-light shrink-0" />
+                      <span className="truncate">{agent.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 truncate">
+                      <Mail className="w-3 h-3 text-vb-gold-light shrink-0" />
+                      <span className="truncate">{agent.email}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Globe className="w-3 h-3 text-vb-gold-light shrink-0" />
+                      <span>vidabricks.com</span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Profile QR Container */}
+                {/* vCard Contact QR Container */}
                 <div className="flex flex-col items-center shrink-0">
                   <div className="p-2 bg-white rounded-xl shadow-lg border border-vb-gold/40">
-                    {profileQr || qrDataUrl ? (
-                      <img src={profileQr || qrDataUrl} alt="Profile QR Code" className="w-20 h-20 object-contain" />
+                    {vcardQr || qrDataUrl ? (
+                      <img src={vcardQr || qrDataUrl} alt="Contact QR Code" className="w-20 h-20 object-contain" />
                     ) : (
                       <div className="w-20 h-20 flex items-center justify-center text-[9px] text-slate-400">
                         Loading QR...
                       </div>
                     )}
                     <span className="block text-[7px] font-extrabold text-vb-black text-center uppercase tracking-wider mt-1">
-                      View my profile
+                      Save my contact
                     </span>
                   </div>
-                </div>
-              </div>
-
-              {/* Bottom Footer (No NFC Enabled!) */}
-              <div className="flex items-center justify-between text-[9px] text-slate-400 pt-2 border-t border-vb-border/60">
-                <span>Tameem House, Barsha Heights, Dubai</span>
-                <span className="text-slate-400 font-mono">agents.vidabricks.com/{agent.slug}</span>
-              </div>
-            </div>
-
-            {/* BACK OF CARD (VCARD CONTACT QR CODE, NO NFC ENABLED) */}
-            <div className="relative aspect-[1.75/1] rounded-2xl p-6 bg-gradient-to-br from-[#0c121e] to-[#04060b] border border-vb-gold/40 shadow-2xl flex items-center justify-between overflow-hidden">
-              <div className="space-y-2.5 max-w-[55%]">
-                <span className="inline-block px-2 py-0.5 rounded-md bg-vb-gold/20 border border-vb-gold/40 text-[8px] font-bold tracking-wider text-vb-gold-champagne uppercase">
-                  Save my contact on vcard qr
-                </span>
-                <h4 className="text-sm font-bold text-white leading-tight">
-                  Connect Directly with {agent.firstName}
-                </h4>
-                <div className="space-y-1 text-[10px] text-slate-300">
-                  <div className="flex items-center gap-1.5">
-                    <Phone className="w-3 h-3 text-vb-gold-light shrink-0" />
-                    <span className="truncate">{agent.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 truncate">
-                    <Mail className="w-3 h-3 text-vb-gold-light shrink-0" />
-                    <span className="truncate">{agent.email}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Globe className="w-3 h-3 text-vb-gold-light shrink-0" />
-                    <span>vidabricks.com</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* vCard Contact QR Container */}
-              <div className="flex flex-col items-center shrink-0">
-                <div className="p-2 bg-white rounded-xl shadow-lg border border-vb-gold/40">
-                  {vcardQr || qrDataUrl ? (
-                    <img src={vcardQr || qrDataUrl} alt="Contact QR Code" className="w-20 h-20 object-contain" />
-                  ) : (
-                    <div className="w-20 h-20 flex items-center justify-center text-[9px] text-slate-400">
-                      Loading QR...
-                    </div>
-                  )}
-                  <span className="block text-[7px] font-extrabold text-vb-black text-center uppercase tracking-wider mt-1">
-                    Save my contact
-                  </span>
                 </div>
               </div>
             </div>
