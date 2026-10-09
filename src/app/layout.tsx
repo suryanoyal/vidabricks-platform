@@ -1,27 +1,5 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, Inter, Cormorant_Garamond } from 'next/font/google';
 import '@/styles/globals.css';
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-jakarta',
-  display: 'swap',
-});
-
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
-const cormorant = Cormorant_Garamond({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-cormorant',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: 'Agents | Vidabricks',
@@ -66,10 +44,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={`${jakarta.variable} ${inter.variable} ${cormorant.variable} dark`}
-    >
+    <html lang="en" className="dark">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
       <body className="bg-vb-dark text-white selection:bg-vb-gold selection:text-vb-black min-h-screen">
         {children}
       </body>
