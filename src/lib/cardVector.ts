@@ -177,20 +177,20 @@ export async function generateCardFrontSvg(
 
   <!-- Top Branding: Logo & Company Name -->
   <g id="vb-brand-header">
-    <image href="${escapeXml(logoUri)}" x="50" y="42" width="44" height="44" preserveAspectRatio="xMidYMid meet" />
-    <text x="106" y="63" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="20" fill="#ffffff" letter-spacing="1.5">VIDABRICKS</text>
-    <text x="106" y="80" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="10" fill="#dfc77b" letter-spacing="2.5">LUXURY REAL ESTATE</text>
+    <image href="${escapeXml(logoUri)}" x="50" y="32" width="70" height="70" preserveAspectRatio="xMidYMid meet" />
+    <text x="135" y="66" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="900" font-size="28" fill="#ffffff" letter-spacing="2">VIDABRICKS</text>
+    <text x="135" y="89" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="13" fill="#dfc77b" letter-spacing="3">LUXURY REAL ESTATE</text>
   </g>
 
   <!-- Left Side: Agent Personal Details -->
   <g id="vb-agent-details">
-    <text x="50" y="215" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="38" fill="#ffffff">${escapeXml(fullName)}</text>
-    <text x="50" y="255" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="600" font-size="20" fill="#dfc77b">${escapeXml(agent.jobTitle || 'Property Consultant')}</text>
-    <text x="50" y="290" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="400" font-size="15" fill="#94a3b8">${escapeXml(brnText)}</text>
+    <text x="50" y="215" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="900" font-size="48" fill="#ffffff">${escapeXml(fullName)}</text>
+    <text x="50" y="262" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="25" fill="#dfc77b">${escapeXml(agent.jobTitle || 'Property Consultant')}</text>
+    <text x="50" y="300" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="500" font-size="17" fill="#94a3b8">${escapeXml(brnText)}</text>
 
     <!-- Profile Action Pill Badge -->
-    <rect x="50" y="325" width="260" height="28" rx="8" fill="#c9a84c" fill-opacity="0.18" stroke="#c9a84c" stroke-opacity="0.5" stroke-width="1" />
-    <text x="60" y="344" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="12" fill="#dfc77b" letter-spacing="0.5">VIEW MY PROFILE ON PROFILE QR</text>
+    <rect x="50" y="335" width="290" height="32" rx="8" fill="#c9a84c" fill-opacity="0.18" stroke="#c9a84c" stroke-opacity="0.5" stroke-width="1" />
+    <text x="64" y="356" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="13.5" fill="#dfc77b" letter-spacing="0.5">VIEW MY PROFILE ON PROFILE QR</text>
   </g>
 
   <!-- Right Side: Profile QR Code Vector Box -->
@@ -209,9 +209,10 @@ export async function generateCardFrontSvg(
 
   <!-- Footer Information -->
   <g id="vb-footer">
-    <text x="50" y="562" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="400" font-size="15" fill="#94a3b8">Tameem House, Barsha Heights, Dubai</text>
-    <text x="1000" y="562" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14" fill="#94a3b8">agents.vidabricks.com/${escapeXml(agent.slug)}</text>
+    <text x="50" y="562" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="400" font-size="16" fill="#94a3b8">Tameem House, Barsha Heights, Dubai</text>
+    <text x="1000" y="562" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15" fill="#94a3b8">agents.vidabricks.com/${escapeXml(agent.slug)}</text>
   </g>
+
 </svg>`;
 }
 
@@ -263,42 +264,43 @@ export async function generateCardBackSvg(
 
   <!-- Top Action Pill Badge -->
   <g id="vb-back-badge">
-    <rect x="50" y="50" width="280" height="30" rx="8" fill="#c9a84c" fill-opacity="0.15" stroke="#c9a84c" stroke-opacity="0.5" stroke-width="1.5" />
-    <text x="62" y="70" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="13" fill="#dfc77b" letter-spacing="0.5">SAVE MY CONTACT ON VCARD QR</text>
+    <rect x="50" y="48" width="310" height="34" rx="8" fill="#c9a84c" fill-opacity="0.15" stroke="#c9a84c" stroke-opacity="0.5" stroke-width="1.5" />
+    <text x="64" y="70" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="14" fill="#dfc77b" letter-spacing="0.5">SAVE MY CONTACT ON VCARD QR</text>
   </g>
 
   <!-- Header -->
-  <text x="50" y="135" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="28" fill="#ffffff">Connect Directly with ${escapeXml(agent.firstName)}</text>
+  <text x="50" y="136" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="38" fill="#ffffff">Connect Directly with ${escapeXml(agent.firstName)}</text>
 
   <!-- Contact List with Vector Icons -->
   <g id="vb-contact-list">
     <!-- Phone -->
-    <g transform="translate(50, 180)">
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" transform="scale(0.85)" fill="none" stroke="#dfc77b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      <text x="32" y="15" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="17" fill="#dfc77b">PHONE:</text>
-      <text x="110" y="15" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="500" font-size="18" fill="#f1f5f9">${escapeXml(agent.phone || '')}</text>
+    <g transform="translate(50, 190)">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" transform="scale(1.1)" fill="none" stroke="#dfc77b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="40" y="19" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="22" fill="#dfc77b">PHONE:</text>
+      <text x="140" y="19" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="600" font-size="23" fill="#f1f5f9">${escapeXml(agent.phone || '')}</text>
     </g>
 
     <!-- Email -->
-    <g transform="translate(50, 225)">
-      <rect width="20" height="16" x="2" y="4" rx="2" transform="scale(0.85)" fill="none" stroke="#dfc77b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" transform="scale(0.85)" fill="none" stroke="#dfc77b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      <text x="32" y="15" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="17" fill="#dfc77b">EMAIL:</text>
-      <text x="110" y="15" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="500" font-size="18" fill="#f1f5f9">${escapeXml(agent.email || '')}</text>
+    <g transform="translate(50, 245)">
+      <rect width="20" height="16" x="2" y="4" rx="2" transform="scale(1.1)" fill="none" stroke="#dfc77b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" transform="scale(1.1)" fill="none" stroke="#dfc77b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="40" y="19" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="22" fill="#dfc77b">EMAIL:</text>
+      <text x="140" y="19" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="600" font-size="23" fill="#f1f5f9">${escapeXml(agent.email || '')}</text>
     </g>
 
     <!-- Web -->
-    <g transform="translate(50, 270)">
-      <circle cx="12" cy="12" r="10" transform="scale(0.85)" fill="none" stroke="#dfc77b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" transform="scale(0.85)" fill="none" stroke="#dfc77b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      <path d="M2 12h20" transform="scale(0.85)" fill="none" stroke="#dfc77b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      <text x="32" y="15" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="17" fill="#dfc77b">WEB:</text>
-      <text x="110" y="15" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="500" font-size="18" fill="#f1f5f9">vidabricks.com</text>
+    <g transform="translate(50, 300)">
+      <circle cx="12" cy="12" r="10" transform="scale(1.1)" fill="none" stroke="#dfc77b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" transform="scale(1.1)" fill="none" stroke="#dfc77b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M2 12h20" transform="scale(1.1)" fill="none" stroke="#dfc77b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="40" y="19" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="22" fill="#dfc77b">WEB:</text>
+      <text x="140" y="19" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="600" font-size="23" fill="#f1f5f9">vidabricks.com</text>
     </g>
   </g>
 
   <!-- Footer note -->
-  <text x="50" y="558" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="400" font-size="14" fill="#94a3b8">Dubai Luxury Real Estate Brokerage</text>
+  <text x="50" y="558" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="400" font-size="16" fill="#94a3b8">Dubai Luxury Real Estate Brokerage</text>
+
 
   <!-- Right Side: Contact vCard QR Code Vector Box -->
   <g id="vb-vcard-qr-container">
@@ -462,27 +464,38 @@ export async function renderCardFrontVectorPdf(
   doc.setFillColor(201, 168, 76);
   doc.rect(offsetX + 0, offsetY + 49.8, 88.9, 1.0, 'F');
 
-  // Top Left Company Branding (100% Vector Typography)
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(255, 255, 255);
-  doc.text('VIDABRICKS', offsetX + 5, offsetY + 6.2);
+  // Top Left Company Branding (100% Vector Typography + Logo)
+  const logoUri = await getLogoDataUri();
+  let brandTextX = offsetX + 5;
+  if (logoUri) {
+    try {
+      doc.addImage(logoUri, 'PNG', offsetX + 5, offsetY + 3.0, 7.5, 7.5);
+      brandTextX = offsetX + 14.0;
+    } catch {
+      brandTextX = offsetX + 5;
+    }
+  }
 
-  doc.setFontSize(4.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12.5);
+  doc.setTextColor(255, 255, 255);
+  doc.text('VIDABRICKS', brandTextX, offsetY + 6.8);
+
+  doc.setFontSize(5.5);
   doc.setTextColor(223, 199, 123);
-  doc.text('LUXURY REAL ESTATE', offsetX + 5, offsetY + 8.8);
+  doc.text('LUXURY REAL ESTATE', brandTextX, offsetY + 9.6);
 
   // Agent Full Name (100% Vector Text)
   const fullName = `${agent.firstName} ${agent.lastName}`;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
+  doc.setFontSize(15.5);
   doc.setTextColor(255, 255, 255);
-  doc.text(fullName, offsetX + 5, offsetY + 18.5);
+  doc.text(fullName, offsetX + 5, offsetY + 19.5);
 
   // Job Title (100% Vector Text)
-  doc.setFontSize(7.5);
+  doc.setFontSize(8.8);
   doc.setTextColor(223, 199, 123);
-  doc.text(agent.jobTitle || 'Property Consultant', offsetX + 5, offsetY + 22.5);
+  doc.text(agent.jobTitle || 'Property Consultant', offsetX + 5, offsetY + 23.8);
 
   // RERA BRN or Dubai UAE (100% Vector Text)
   const hasRera = Boolean(agent.reraNumber && agent.reraNumber.trim() && agent.reraNumber !== 'N/A');
@@ -490,19 +503,19 @@ export async function renderCardFrontVectorPdf(
     ? `RERA BRN: ${agent.reraNumber!.trim()} • Dubai, UAE`
     : 'Dubai, UAE';
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(5.5);
+  doc.setFontSize(6.2);
   doc.setTextColor(148, 163, 184);
-  doc.text(brnText, offsetX + 5, offsetY + 26.0);
+  doc.text(brnText, offsetX + 5, offsetY + 27.5);
 
   // Profile Action Badge (Vector Box + Vector Text)
   doc.setFillColor(35, 33, 26);
-  doc.roundedRect(offsetX + 5, offsetY + 28.5, 42, 3.5, 0.8, 0.8, 'F');
+  doc.roundedRect(offsetX + 5, offsetY + 30.5, 45, 3.8, 0.8, 0.8, 'F');
   doc.setDrawColor(201, 168, 76);
-  doc.roundedRect(offsetX + 5, offsetY + 28.5, 42, 3.5, 0.8, 0.8, 'D');
+  doc.roundedRect(offsetX + 5, offsetY + 30.5, 45, 3.8, 0.8, 0.8, 'D');
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(4.5);
+  doc.setFontSize(4.8);
   doc.setTextColor(223, 199, 123);
-  doc.text('VIEW MY PROFILE ON PROFILE QR', offsetX + 6, offsetY + 30.9);
+  doc.text('VIEW MY PROFILE ON PROFILE QR', offsetX + 6, offsetY + 33.1);
 
   // Right Side: White QR Code Container (Vector Box)
   doc.setFillColor(255, 255, 255);
@@ -563,41 +576,46 @@ export async function renderCardBackVectorPdf(
 
   // Action Pill Badge Top Left
   doc.setFillColor(35, 33, 26);
-  doc.roundedRect(offsetX + 5, offsetY + 4.5, 42, 3.5, 0.8, 0.8, 'F');
+  doc.roundedRect(offsetX + 5, offsetY + 4.5, 46, 3.8, 0.8, 0.8, 'F');
   doc.setDrawColor(201, 168, 76);
-  doc.roundedRect(offsetX + 5, offsetY + 4.5, 42, 3.5, 0.8, 0.8, 'D');
+  doc.roundedRect(offsetX + 5, offsetY + 4.5, 46, 3.8, 0.8, 0.8, 'D');
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(4.5);
+  doc.setFontSize(4.8);
   doc.setTextColor(223, 199, 123);
-  doc.text('SAVE MY CONTACT ON VCARD QR', offsetX + 6, offsetY + 6.9);
+  doc.text('SAVE MY CONTACT ON VCARD QR', offsetX + 6, offsetY + 7.1);
 
   // Connect Heading (100% Vector Text)
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.5);
+  doc.setFontSize(11.5);
   doc.setTextColor(255, 255, 255);
-  doc.text(`Connect Directly with ${agent.firstName}`, offsetX + 5, offsetY + 14.0);
+  doc.text(`Connect Directly with ${agent.firstName}`, offsetX + 5, offsetY + 14.5);
 
   // Contact list (100% Vector Text)
-  doc.setFontSize(5.5);
+  doc.setFontSize(7.0);
   doc.setTextColor(223, 199, 123);
-  doc.text('PHONE:', offsetX + 5, offsetY + 19.5);
-  doc.setFont('helvetica', 'normal');
+  doc.text('PHONE:', offsetX + 5, offsetY + 20.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
   doc.setTextColor(241, 245, 249);
-  doc.text(agent.phone || '', offsetX + 15, offsetY + 19.5);
+  doc.text(agent.phone || '', offsetX + 18, offsetY + 20.5);
 
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.0);
   doc.setTextColor(223, 199, 123);
-  doc.text('EMAIL:', offsetX + 5, offsetY + 24.5);
-  doc.setFont('helvetica', 'normal');
+  doc.text('EMAIL:', offsetX + 5, offsetY + 26.0);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
   doc.setTextColor(241, 245, 249);
-  doc.text(agent.email || '', offsetX + 15, offsetY + 24.5);
+  doc.text(agent.email || '', offsetX + 18, offsetY + 26.0);
 
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.0);
   doc.setTextColor(223, 199, 123);
-  doc.text('WEB:', offsetX + 5, offsetY + 29.5);
-  doc.setFont('helvetica', 'normal');
+  doc.text('WEB:', offsetX + 5, offsetY + 31.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
   doc.setTextColor(241, 245, 249);
-  doc.text('vidabricks.com', offsetX + 15, offsetY + 29.5);
+  doc.text('vidabricks.com', offsetX + 18, offsetY + 31.5);
 
   // Footer note (100% Vector Text)
   doc.setFont('helvetica', 'normal');

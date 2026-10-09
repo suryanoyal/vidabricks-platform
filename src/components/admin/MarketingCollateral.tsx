@@ -540,54 +540,53 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
 
                 {/* Top Branding Bar */}
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-3.5">
                     <img
                       src="/logos/vidabricks-gold.png"
                       alt="Vidabricks"
-                      className="h-8 w-auto object-contain drop-shadow"
+                      className="h-14 sm:h-16 w-auto object-contain drop-shadow-md"
                     />
                     <div>
-                      <span className="font-display font-extrabold text-sm tracking-widest text-white block">
+                      <span className="font-display font-extrabold text-lg sm:text-xl md:text-2xl tracking-widest text-white block">
                         VIDABRICKS
                       </span>
-                      <span className="text-[8px] tracking-[0.25em] text-vb-gold-champagne font-bold uppercase block">
+                      <span className="text-[10px] sm:text-xs tracking-[0.25em] text-vb-gold-champagne font-bold uppercase block mt-0.5">
                         LUXURY REAL ESTATE
                       </span>
                     </div>
                   </div>
                 </div>
 
-
                 {/* Middle Section: Agent Details (Left) + Profile QR (Right) */}
                 <div className="flex items-center justify-between gap-4">
-                  <div className="space-y-1.5 max-w-[58%]">
-                    <h3 className="text-xl font-bold font-display text-white tracking-tight">
+                  <div className="space-y-2.5 max-w-[62%]">
+                    <h3 className="text-3xl sm:text-4xl font-extrabold font-display text-white tracking-tight leading-tight">
                       {fullName}
                     </h3>
-                    <p className="text-xs font-semibold text-vb-gold-light tracking-wide">
+                    <p className="text-base sm:text-lg font-bold text-vb-gold-light tracking-wide">
                       {agent.jobTitle}
                     </p>
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-xs sm:text-sm text-slate-300 font-medium">
                       {agent.reraNumber && agent.reraNumber.trim() && agent.reraNumber !== 'N/A'
                         ? `RERA BRN: ${agent.reraNumber.trim()} • Dubai, UAE`
                         : 'Dubai, UAE'}
                     </p>
-                    <span className="inline-block px-2 py-0.5 rounded-md bg-vb-gold/20 border border-vb-gold/40 text-[8px] font-bold tracking-wider text-vb-gold-champagne uppercase">
+                    <span className="inline-block px-3 py-1 rounded-md bg-vb-gold/20 border border-vb-gold/40 text-[10px] sm:text-xs font-bold tracking-wider text-vb-gold-champagne uppercase">
                       View my profile on profile qr
                     </span>
                   </div>
 
                   {/* Profile QR Container */}
                   <div className="flex flex-col items-center shrink-0">
-                    <div className="p-2 bg-white rounded-xl shadow-lg border border-vb-gold/40">
+                    <div className="p-2.5 bg-white rounded-xl shadow-lg border border-vb-gold/40">
                       {profileQr || qrDataUrl ? (
-                        <img src={profileQr || qrDataUrl} alt="Profile QR Code" className="w-20 h-20 object-contain" />
+                        <img src={profileQr || qrDataUrl} alt="Profile QR Code" className="w-20 h-20 sm:w-22 sm:h-22 object-contain" />
                       ) : (
                         <div className="w-20 h-20 flex items-center justify-center text-[9px] text-slate-400">
                           Loading QR...
                         </div>
                       )}
-                      <span className="block text-[7px] font-extrabold text-vb-black text-center uppercase tracking-wider mt-1">
+                      <span className="block text-[8px] font-extrabold text-vb-black text-center uppercase tracking-wider mt-1">
                         View my profile
                       </span>
                     </div>
@@ -595,9 +594,9 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
                 </div>
 
                 {/* Bottom Footer (No NFC Enabled!) */}
-                <div className="flex items-center justify-between text-[9px] text-slate-400 pt-2 border-t border-vb-border/60">
+                <div className="flex items-center justify-between text-xs text-slate-300 pt-2 border-t border-vb-border/60">
                   <span>Tameem House, Barsha Heights, Dubai</span>
-                  <span className="text-slate-400 font-mono">agents.vidabricks.com/{agent.slug}</span>
+                  <span className="text-slate-300 font-mono">agents.vidabricks.com/{agent.slug}</span>
                 </div>
               </div>
             </div>
@@ -633,40 +632,40 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
 
 
               <div className="relative aspect-[1.75/1] rounded-2xl p-6 bg-gradient-to-br from-[#0c121e] to-[#04060b] border border-vb-gold/40 shadow-2xl flex items-center justify-between overflow-hidden">
-                <div className="space-y-2.5 max-w-[55%]">
-                  <span className="inline-block px-2 py-0.5 rounded-md bg-vb-gold/20 border border-vb-gold/40 text-[8px] font-bold tracking-wider text-vb-gold-champagne uppercase">
+                <div className="space-y-3.5 max-w-[60%]">
+                  <span className="inline-block px-3 py-1 rounded-md bg-vb-gold/20 border border-vb-gold/40 text-[10px] sm:text-xs font-bold tracking-wider text-vb-gold-champagne uppercase">
                     Save my contact on vcard qr
                   </span>
-                  <h4 className="text-sm font-bold text-white leading-tight">
+                  <h4 className="text-xl sm:text-2xl font-bold font-display text-white leading-snug">
                     Connect Directly with {agent.firstName}
                   </h4>
-                  <div className="space-y-1 text-[10px] text-slate-300">
-                    <div className="flex items-center gap-1.5">
-                      <Phone className="w-3 h-3 text-vb-gold-light shrink-0" />
-                      <span className="truncate">{agent.phone}</span>
+                  <div className="space-y-2 text-sm sm:text-base text-slate-200">
+                    <div className="flex items-center gap-2.5">
+                      <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-vb-gold-light shrink-0" />
+                      <span className="truncate font-semibold">{agent.phone}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 truncate">
-                      <Mail className="w-3 h-3 text-vb-gold-light shrink-0" />
-                      <span className="truncate">{agent.email}</span>
+                    <div className="flex items-center gap-2.5 truncate">
+                      <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-vb-gold-light shrink-0" />
+                      <span className="truncate font-semibold">{agent.email}</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Globe className="w-3 h-3 text-vb-gold-light shrink-0" />
-                      <span>vidabricks.com</span>
+                    <div className="flex items-center gap-2.5">
+                      <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-vb-gold-light shrink-0" />
+                      <span className="font-semibold">vidabricks.com</span>
                     </div>
                   </div>
                 </div>
 
                 {/* vCard Contact QR Container */}
                 <div className="flex flex-col items-center shrink-0">
-                  <div className="p-2 bg-white rounded-xl shadow-lg border border-vb-gold/40">
+                  <div className="p-2.5 bg-white rounded-xl shadow-lg border border-vb-gold/40">
                     {vcardQr || qrDataUrl ? (
-                      <img src={vcardQr || qrDataUrl} alt="Contact QR Code" className="w-20 h-20 object-contain" />
+                      <img src={vcardQr || qrDataUrl} alt="Contact QR Code" className="w-20 h-20 sm:w-22 sm:h-22 object-contain" />
                     ) : (
                       <div className="w-20 h-20 flex items-center justify-center text-[9px] text-slate-400">
                         Loading QR...
                       </div>
                     )}
-                    <span className="block text-[7px] font-extrabold text-vb-black text-center uppercase tracking-wider mt-1">
+                    <span className="block text-[8px] font-extrabold text-vb-black text-center uppercase tracking-wider mt-1">
                       Save my contact
                     </span>
                   </div>
@@ -676,6 +675,7 @@ export const MarketingCollateral: React.FC<MarketingCollateralProps> = ({
           </div>
         </div>
       )}
+
 
       {/* 2. PROPERTY BROCHURE FLYER / SIGNBOARD */}
       {activeTab === 'flyer' && (

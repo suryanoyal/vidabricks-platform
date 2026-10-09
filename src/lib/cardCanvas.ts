@@ -153,58 +153,58 @@ export async function renderCardFrontCanvas(
   // Draw Logo
   const logoImg = await loadSafeImage('/logos/vidabricks-gold.png');
   if (logoImg && logoImg.width > 0 && logoImg.height > 0) {
-    const logoHeight = 44;
+    const logoHeight = 64;
     const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
-    ctx.drawImage(logoImg, 50, 42, logoWidth, logoHeight);
+    ctx.drawImage(logoImg, 50, 34, logoWidth, logoHeight);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
-    ctx.fillText('VIDABRICKS', 50 + logoWidth + 12, 63);
+    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+    ctx.fillText('VIDABRICKS', 50 + logoWidth + 14, 63);
 
     ctx.fillStyle = '#dfc77b';
-    ctx.font = 'bold 10px system-ui, -apple-system, sans-serif';
-    ctx.fillText('LUXURY REAL ESTATE', 50 + logoWidth + 12, 80);
+    ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
+    ctx.fillText('LUXURY REAL ESTATE', 50 + logoWidth + 14, 84);
   } else {
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 30px system-ui, -apple-system, sans-serif';
     ctx.fillText('VIDABRICKS', 50, 65);
 
     ctx.fillStyle = '#dfc77b';
-    ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
-    ctx.fillText('LUXURY REAL ESTATE', 50, 84);
+    ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
+    ctx.fillText('LUXURY REAL ESTATE', 50, 86);
   }
 
   // Agent Details (Left Side)
   const fullName = `${agent.firstName} ${agent.lastName}`;
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 38px system-ui, -apple-system, sans-serif';
+  ctx.font = 'bold 48px system-ui, -apple-system, sans-serif';
   ctx.fillText(fullName, 50, 215);
 
   ctx.fillStyle = '#dfc77b';
-  ctx.font = '600 20px system-ui, -apple-system, sans-serif';
-  ctx.fillText(agent.jobTitle || 'Property Consultant', 50, 255);
+  ctx.font = 'bold 25px system-ui, -apple-system, sans-serif';
+  ctx.fillText(agent.jobTitle || 'Property Consultant', 50, 260);
 
   ctx.fillStyle = '#94a3b8';
-  ctx.font = '15px system-ui, -apple-system, sans-serif';
+  ctx.font = '17px system-ui, -apple-system, sans-serif';
   const hasRera = Boolean(agent.reraNumber && agent.reraNumber.trim() && agent.reraNumber !== 'N/A');
   const brnText = hasRera
     ? `RERA BRN: ${agent.reraNumber.trim()} • Dubai, UAE`
     : 'Dubai, UAE';
-  ctx.fillText(brnText, 50, 290);
+  ctx.fillText(brnText, 50, 298);
 
   // Profile QR Label Badge on Front
   const profileLabel = 'VIEW MY PROFILE ON PROFILE QR';
-  ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
+  ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
   const profileLabelW = ctx.measureText(profileLabel).width;
   ctx.fillStyle = 'rgba(201, 168, 76, 0.18)';
-  roundRect(ctx, 50, 330, profileLabelW + 20, 28, 8);
+  roundRect(ctx, 50, 335, profileLabelW + 22, 30, 8);
   ctx.fill();
   ctx.strokeStyle = 'rgba(201, 168, 76, 0.5)';
   ctx.lineWidth = 1;
-  roundRect(ctx, 50, 330, profileLabelW + 20, 28, 8);
+  roundRect(ctx, 50, 335, profileLabelW + 22, 30, 8);
   ctx.stroke();
   ctx.fillStyle = '#dfc77b';
-  ctx.fillText(profileLabel, 60, 349);
+  ctx.fillText(profileLabel, 61, 355);
 
   // Right Side: PROFILE QR Code Container on Front Card
   const qrBoxSize = 280;
@@ -331,36 +331,36 @@ export async function renderCardBackCanvas(
 
   // Header
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
-  ctx.fillText(`Connect Directly with ${agent.firstName}`, 50, 135);
+  ctx.font = 'bold 38px system-ui, -apple-system, sans-serif';
+  ctx.fillText(`Connect Directly with ${agent.firstName}`, 50, 136);
 
   // Contact list
   const startY = 195;
-  const lineHeight = 42;
+  const lineHeight = 52;
 
   // Phone
   ctx.fillStyle = '#dfc77b';
-  ctx.font = 'bold 17px system-ui, -apple-system, sans-serif';
+  ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
   ctx.fillText('PHONE:', 50, startY);
   ctx.fillStyle = '#f1f5f9';
-  ctx.font = '18px system-ui, -apple-system, sans-serif';
-  ctx.fillText(agent.phone || '', 135, startY);
+  ctx.font = '600 23px system-ui, -apple-system, sans-serif';
+  ctx.fillText(agent.phone || '', 150, startY);
 
   // Email
   ctx.fillStyle = '#dfc77b';
-  ctx.font = 'bold 17px system-ui, -apple-system, sans-serif';
+  ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
   ctx.fillText('EMAIL:', 50, startY + lineHeight);
   ctx.fillStyle = '#f1f5f9';
-  ctx.font = '18px system-ui, -apple-system, sans-serif';
-  ctx.fillText(agent.email || '', 135, startY + lineHeight);
+  ctx.font = '600 23px system-ui, -apple-system, sans-serif';
+  ctx.fillText(agent.email || '', 150, startY + lineHeight);
 
   // Web
   ctx.fillStyle = '#dfc77b';
-  ctx.font = 'bold 17px system-ui, -apple-system, sans-serif';
+  ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
   ctx.fillText('WEB:', 50, startY + lineHeight * 2);
   ctx.fillStyle = '#f1f5f9';
-  ctx.font = '18px system-ui, -apple-system, sans-serif';
-  ctx.fillText('vidabricks.com', 135, startY + lineHeight * 2);
+  ctx.font = '600 23px system-ui, -apple-system, sans-serif';
+  ctx.fillText('vidabricks.com', 150, startY + lineHeight * 2);
 
   // Footer notes on left (NO NFC text!)
   ctx.fillStyle = '#94a3b8';
